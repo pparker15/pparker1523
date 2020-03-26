@@ -1,0 +1,6 @@
+#!/bin/bash
+#cd tmp
+#tcpdump -G 900 -w 'timed%s.pcap' -A -i ens33
+nfpcapd -l ScriptFolder -r ASCIItest.pcap
+nfanon -R ScriptFolder -w afternfanon -K 11223344556677889900aabbccddeeff
+nfdump -r afternfanon
