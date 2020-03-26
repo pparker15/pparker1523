@@ -1,0 +1,13 @@
+ipAddress = " "
+name = " " 
+#get the line from the nslookup file
+with open("outputnslookup.txt") as ifile:
+#for each line in the file take the IP address and name then store it in a variable and put it into the pcap file
+    for line in ifile:
+        if "Authoritative" not in line:
+            if "** server " not in line:
+                #print (line.split(".in-addr",1)[0])
+                ipAddress = line.split(".in-addr",1)[0]
+                name = line.split("name = ",1)[-1]
+                print(ipAddress)
+                print(name)
