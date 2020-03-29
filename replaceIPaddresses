@@ -1,13 +1,26 @@
-ipAddress = " "
-name = " " 
-#get the line from the nslookup file
-with open("outputnslookup.txt") as ifile:
-#for each line in the file take the IP address and name then store it in a variable and put it into the pcap file
-    for line in ifile:
-        if "Authoritative" not in line:
-            if "** server " not in line:
-                #print (line.split(".in-addr",1)[0])
-                ipAddress = line.split(".in-addr",1)[0]
-                name = line.split("name = ",1)[-1]
-                print(ipAddress)
-                print(name)
+with open("nfdumpTestFile", 'r') as captureFile:
+    for captureLine in captureFile:
+        if "Date" not in captureLine:
+            extractedLine = captureLine.split()
+            srcIP = extractedLine[5]
+            dstIP = extractedLine[7]
+            srcIP = str(srcIP.split(":",1)[0])
+            dstIP = str(dstIP.split(":",1)[0])
+
+            with open("afterNslookup.txt") as file:
+                for line in file:
+                    if "Authoritative" not in line:
+                        if "** server " not in line:
+                            ipAddressReverse = str(line.split(".in-addr",1)[0])
+                            name = str(line.split("name = ", 1)[-1])
+                            try:
+                                ipAddressSplit = ipAddressReverse.split(".",4)[3] + "." + ipAddressReverse.split(".",4)[2] + "." + ipAddressReverse.split(".",4)[1] + "." + ipAddressReverse.split(".",4)[0]
+                                if srcIP == ipAddressSplit:
+                                    extractedLine[5] = name
+                                    print(extractedLine)
+                                if dstIP == ipAddressSplit:
+                                    extractedLine[7] = name
+                                    print(extractedLine)
+                            except:
+                                print(" ")
+print("completed")
