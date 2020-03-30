@@ -1,8 +1,10 @@
 srcIPchange = "false"
 dstIPchange = "false"
-
+printed = "false"
+#take the nfdump file and loop through each line extracting the source IP address and destination IP address
 with open("nfdumpTestFile", 'r') as captureFile:
     for captureLine in captureFile:
+        printed = "false"
         if "Date" not in captureLine:
             extractedLine = captureLine.split()
             try:
@@ -12,54 +14,76 @@ with open("nfdumpTestFile", 'r') as captureFile:
                 dstIP = str(dstIP.split(":",1)[0])
             except:
                 continue
+            # for each line within the nfdump file, use the nslookup file to replace the IP address with the name by matching the IP addresses.
             with open("nslookupUniqPy.txt", 'r') as file:
                 for line in file:
-                    if "Authoritative" not in line:
-                        if "** server " not in line:
-                            ipAddressReverse = str(line.split(".in-addr",1)[0])
-                            name = str(line.split("name = ", 1)[-1])
-                            try:
-                                ipAddressSplit = ipAddressReverse.split(".",4)[3] + "." + ipAddressReverse.split(".",4)[2] + "." + ipAddressReverse.split(".",4)[1] + "." + ipAddressReverse.split(".",4)[0]
-                                if srcIP == ipAddressSplit:
-                                    extractedLine[5] = name
-                                    srcIPchange = "true"
-                                elif dstIP == ipAddressSplit:
-                                    extractedLine[7] = name
-                                    dstIPchange = "true"
+                    if printed != "true":
+                        if "Authoritative" not in line:
+                            if "** server " not in line:
+                                ipAddressReverse = str(line.split(".in-addr",1)[0])
+                                name = str(line.split("name = ", 1)[-1])
+                                try:
+                                    ipAddressSplit = ipAddressReverse.split(".",4)[3] + "." + ipAddressReverse.split(".",4)[2] + "." + ipAddressReverse.split(".",4)[1] + "." + ipAddressReverse.split(".",4)[0]
+                                    if srcIP == ipAddressSplit:
+                                        extractedLine[5] = name
+                                        srcIPchange = "true"
+                                    elif dstIP == ipAddressSplit:
+                                        extractedLine[7] = name
+                                        dstIPchange = "true"
 
-                                if srcIPchange == "true" and dstIPchange == "true":
-                                    print(extractedLine)
-                                    fileOut = open("MergedFiles.txt", "a")
-                                    fileOut.write(str(extractedLine))
-                                    fileOut.write('\n')
-                                    fileOut.close()
-                                    #added to prevent constant printing
-                                    srcIPchange = "false"
-                                    dstIPchange = "false"
-                                
-                            except:
-                                continue
-                        else:
-                            ipAddressUnknownRev = str(line.split(".in-addr",1)[0])
-                            ipAddressUnknownRev = str(ipAddressUnknownRev.split("** server can't find ",1)[-1])
-                            try:
-                                ipAddressSplitUnk = ipAddressUnknownRev.split(".",4)[3] + "." + ipAddressUnknownRev.split(".",4)[2] + "." + ipAddressUnknownRev.split(".",4)[1] + "." + ipAddressUnknownRev.split(".",4)[0]
-                                if srcIP == ipAddressSplitUnk:
-                                    extractedLine[5] = "Unknown"
-                                    srcIPchange = "true"
-                                elif dstIP == ipAddressSplitUnk:
-                                    extractedLine[7] = "Unknown"
-                                    dstIPchange = "true"
+                                    if srcIPchange == "true" and dstIPchange == "true":
+                                        print(extractedLine)
+                                        fileOut = open("MergedFiles.txt", "a")
+                                        fileOut.write(str(extractedLine))
+                                        fileOut.write('\n')
+                                        fileOut.close()
+                                        #added to prevent constant printing
+                                        srcIPchange = "false"
+                                        dstIPchange = "false"
+                                        printed = "true"
+                                    
+                                except:
+                                    continue
+                            # if the address is not found then replace the ip address with unknown
+                            else:
+                                ipAddressUnknownRev = str(line.split(".in-addr",1)[0])
+                                ipAddressUnknownRev = str(ipAddressUnknownRev.split("** server can't find ",1)[-1])
+                                try:
+                                    ipAddressSplitUnk = ipAddressUnknownRev.split(".",4)[3] + "." + ipAddressUnknownRev.split(".",4)[2] + "." + ipAddressUnknownRev.split(".",4)[1] + "." + ipAddressUnknownRev.split(".",4)[0]
+                                    if srcIP == ipAddressSplitUnk:
+                                        extractedLine[5] = "Unknown"
+                                        srcIPchange = "true"
+                                    elif dstIP == ipAddressSplitUnk:
+                                        extractedLine[7] = "Unknown"
+                                        dstIPchange = "true"
 
-                                if srcIPchange == "true" and dstIPchange == "true":
-                                    print(extractedLine)
-                                    fileOut = open("MergedFiles.txt", "a")
-                                    fileOut.write(str(extractedLine))
-                                    fileOut.write('\n')
-                                    fileOut.close()
-                                    #added to prevent constant printing
-                                    srcIPchange = "false"
-                                    dstIPchange = "false"
-                                
-                            except:
-                                continue
+                                    if srcIPchange == "true" and dstIPchange == "true":
+                                        print(extractedLine)
+                                        fileOut = open("MergedFiles.txt", "a")
+                                        fileOut.write(str(extractedLine))
+                                        fileOut.write('\n')
+                                        fileOut.close()
+                                        #added to prevent constant printing
+                                        srcIPchange = "false"
+                                        dstIPchange = "false"
+                                        printed = "true"
+                                except:
+                                    continue
+            # as not all lines were printed this ensures that each line is printed once the IP addresses are replaced
+            try:
+                if printed == "false":
+                    if srcIPchange == "true" and dstIPchange == "false":
+                        extractedLine[7] = "Unknown"
+                    if dstIPchange == "true" and srcIPchange == "false":
+                        extractedLine[5] = "Unknown"
+                    print(extractedLine)
+                    fileOut = open("MergedFiles.txt", "a")
+                    fileOut.write(str(extractedLine))
+                    fileOut.write('\n')
+                    fileOut.close()
+                    #added to prevent constant printing
+                    srcIPchange = "false"
+                    dstIPchange = "false"
+                    #printed = "false"
+            except:
+                continue
