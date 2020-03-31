@@ -1,6 +1,9 @@
+#database connection
+import mysql.connector
+cnx = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='network_flows')
+
 srcIPchange = "false"
 dstIPchange = "false"
-printed = "false"
 #take the nfdump file and loop through each line extracting the source IP address and destination IP address
 with open("nfdumpTestFile", 'r') as captureFile:
     for captureLine in captureFile:
@@ -33,10 +36,16 @@ with open("nfdumpTestFile", 'r') as captureFile:
 
                                     if srcIPchange == "true" and dstIPchange == "true":
                                         print(extractedLine)
-                                        fileOut = open("MergedFiles.txt", "a")
-                                        fileOut.write(str(extractedLine))
-                                        fileOut.write('\n')
-                                        fileOut.close()
+                                        #database output
+                                        try:
+                                            cursor = cnx.cursor()
+                                            insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name, Destination_Name, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s)")
+                                            data = (extractedLine[0], extractedLine[1], extractedLine[4], extractedLine[5], extractedLine[7], extractedLine[11], extractedLine[12])
+                                            cursor.execute(insertData, data)
+                                            cursor.close()
+                                            cnx.commit()
+                                        except:
+                                            print("Error inserting data into the database")
                                         #added to prevent constant printing
                                         srcIPchange = "false"
                                         dstIPchange = "false"
@@ -58,11 +67,17 @@ with open("nfdumpTestFile", 'r') as captureFile:
                                         dstIPchange = "true"
 
                                     if srcIPchange == "true" and dstIPchange == "true":
-                                        print(extractedLine)
-                                        fileOut = open("MergedFiles.txt", "a")
-                                        fileOut.write(str(extractedLine))
-                                        fileOut.write('\n')
-                                        fileOut.close()
+                                        print(extractedLine)                                        
+                                        #database output
+                                        try:
+                                            cursor = cnx.cursor()
+                                            insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name, Destination_Name, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s)")
+                                            data = (extractedLine[0], extractedLine[1], extractedLine[4], extractedLine[5], extractedLine[7], extractedLine[11], extractedLine[12])
+                                            cursor.execute(insertData, data)
+                                            cursor.close()
+                                            cnx.commit()
+                                        except:
+                                            print("Error inserting data into the database")
                                         #added to prevent constant printing
                                         srcIPchange = "false"
                                         dstIPchange = "false"
@@ -77,13 +92,19 @@ with open("nfdumpTestFile", 'r') as captureFile:
                     if dstIPchange == "true" and srcIPchange == "false":
                         extractedLine[5] = "Unknown"
                     print(extractedLine)
-                    fileOut = open("MergedFiles.txt", "a")
-                    fileOut.write(str(extractedLine))
-                    fileOut.write('\n')
-                    fileOut.close()
+                    
+                    #database output
+                    try:
+                        cursor = cnx.cursor()
+                        insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name, Destination_Name, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s)")
+                        data = (extractedLine[0], extractedLine[1], extractedLine[4], extractedLine[5], extractedLine[7], extractedLine[11], extractedLine[12])
+                        cursor.execute(insertData, data)
+                        cursor.close()
+                        cnx.commit()
+                    except:
+                        print("Error inserting data into the database")
                     #added to prevent constant printing
                     srcIPchange = "false"
                     dstIPchange = "false"
-                    #printed = "false"
             except:
                 continue
