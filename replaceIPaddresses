@@ -1,11 +1,16 @@
-#database connection
+#database connection's
 import mysql.connector
+import pymongo
 cnx = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='network_flows')
+
+mongoCon = pymongo.MongoClient('mongodb://admin:password@192.168.20.31')
+myDatabase = mongoCon["user_profiling"]
+myCollection = myDatabase["nfdump0304Data"]
 
 srcIPchange = "false"
 dstIPchange = "false"
 #take the nfdump file and loop through each line extracting the source IP address and destination IP address
-with open("nfdumpTestFile", 'r') as captureFile:
+with open("0304output.txt", 'r') as captureFile:
     for captureLine in captureFile:
         printed = "false"
         if "Date" not in captureLine:
@@ -18,7 +23,7 @@ with open("nfdumpTestFile", 'r') as captureFile:
             except:
                 continue
             # for each line within the nfdump file, use the nslookup file to replace the IP address with the name by matching the IP addresses.
-            with open("nslookupUniqPy.txt", 'r') as file:
+            with open("nsoutput0304.txt", 'r') as file:
                 for line in file:
                     if printed != "true":
                         if "Authoritative" not in line:
@@ -38,12 +43,17 @@ with open("nfdumpTestFile", 'r') as captureFile:
                                         print(extractedLine)
                                         #database output
                                         try:
+                                            #mysql
                                             cursor = cnx.cursor()
                                             insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name, Destination_Name, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s)")
                                             data = (extractedLine[0], extractedLine[1], extractedLine[4], extractedLine[5], extractedLine[7], extractedLine[11], extractedLine[12])
                                             cursor.execute(insertData, data)
                                             cursor.close()
                                             cnx.commit()
+
+                                            #mongo
+                                            myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name" : extractedLine[5], "destination_name" : extractedLine[7], "in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
+                                            insertIntoDB = myCollection.insert_one(myData)
                                         except:
                                             print("Error inserting data into the database")
                                         #added to prevent constant printing
@@ -70,12 +80,17 @@ with open("nfdumpTestFile", 'r') as captureFile:
                                         print(extractedLine)                                        
                                         #database output
                                         try:
+                                            #mySQL
                                             cursor = cnx.cursor()
                                             insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name, Destination_Name, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s)")
                                             data = (extractedLine[0], extractedLine[1], extractedLine[4], extractedLine[5], extractedLine[7], extractedLine[11], extractedLine[12])
                                             cursor.execute(insertData, data)
                                             cursor.close()
                                             cnx.commit()
+
+                                            #mongo
+                                            myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name" : extractedLine[5], "destination_name" : extractedLine[7], "in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
+                                            insertIntoDB = myCollection.insert_one(myData)
                                         except:
                                             print("Error inserting data into the database")
                                         #added to prevent constant printing
@@ -95,12 +110,17 @@ with open("nfdumpTestFile", 'r') as captureFile:
                     
                     #database output
                     try:
+                        #mysql
                         cursor = cnx.cursor()
                         insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name, Destination_Name, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s)")
                         data = (extractedLine[0], extractedLine[1], extractedLine[4], extractedLine[5], extractedLine[7], extractedLine[11], extractedLine[12])
                         cursor.execute(insertData, data)
                         cursor.close()
                         cnx.commit()
+
+                        #mongo
+                        myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name" : extractedLine[5], "destination_name" : extractedLine[7], "in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
+                        insertIntoDB = myCollection.insert_one(myData)
                     except:
                         print("Error inserting data into the database")
                     #added to prevent constant printing
