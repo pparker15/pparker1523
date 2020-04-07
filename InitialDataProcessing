@@ -1,0 +1,28 @@
+#!/bin/bash
+
+DIR='/home/user/Desktop/0704/todaysData/'
+for FILE in "$DIR"*
+do
+	echo $FILE
+    	nfpcapd -l /home/user/Desktop/0704/todaysData/ProcessedData -r $FILE
+done
+
+cd '/home/user/Desktop/0704/'
+
+echo 'running nfdump'
+
+nfdump -R /home/user/Desktop/0704/todaysData/ProcessedData > 0704output.txt
+
+echo >> ipAddressesPython0704.txt
+
+echo 'Extracting IP addresses'
+python extractIPs.py
+
+echo 'Sorting IP addresses'
+sort ipAddressesPython0704.txt | uniq > sortOutput0704.txt
+
+echo 'Starting nslookup'
+nslookup < sortOutput0704.txt > nsOutput0704.txt
+
+echo 'replacing IP addresses'
+python mergeFilesV3_mongo.py
