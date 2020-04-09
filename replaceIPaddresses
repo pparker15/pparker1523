@@ -5,12 +5,12 @@ cnx = mysql.connector.connect(user='parker', password='password', host='192.168.
 
 mongoCon = pymongo.MongoClient('mongodb://admin:password@192.168.20.31')
 myDatabase = mongoCon["user_profiling"]
-myCollection = myDatabase["nfdump0304Data"]
+myCollection = myDatabase["nfdumpASNandNS"]
 
 srcIPchange = "false"
 dstIPchange = "false"
 #take the nfdump file and loop through each line extracting the source IP address and destination IP address
-with open("0304output.txt", 'r') as captureFile:
+with open("nfdumpTestFile", 'r') as captureFile:
     for captureLine in captureFile:
         printed = "false"
         if "Date" not in captureLine:
@@ -22,109 +22,134 @@ with open("0304output.txt", 'r') as captureFile:
                 dstIP = str(dstIP.split(":",1)[0])
             except:
                 continue
-            # for each line within the nfdump file, use the nslookup file to replace the IP address with the name by matching the IP addresses.
-            with open("nsoutput0304.txt", 'r') as file:
+# this is the asn file
+            with open("asnSmall.txt", 'r') as file:
                 for line in file:
-                    if printed != "true":
-                        if "Authoritative" not in line:
-                            if "** server " not in line:
-                                ipAddressReverse = str(line.split(".in-addr",1)[0])
-                                name = str(line.split("name = ", 1)[-1])
-                                try:
-                                    ipAddressSplit = ipAddressReverse.split(".",4)[3] + "." + ipAddressReverse.split(".",4)[2] + "." + ipAddressReverse.split(".",4)[1] + "." + ipAddressReverse.split(".",4)[0]
-                                    if srcIP == ipAddressSplit:
-                                        extractedLine[5] = name
-                                        srcIPchange = "true"
-                                    elif dstIP == ipAddressSplit:
-                                        extractedLine[7] = name
-                                        dstIPchange = "true"
+                    if "Bulk mode; " not in line:
+                        if "Error: " not in line:
+                            asnLine = line.split()
+                            try:
+                                if srcIP == asnLine[2]:
+                                    #print("source " + line.split("|")[-1])
+                                    srcIPchange = "true"
+                                    newSrc = line.split("|")[-1]
+                                elif dstIP == asnLine[2]:
+                                    #print("destination " + line.split("|")[-1])
+                                    dstIPchange = "true"
+                                    newDst = line.split("|")[-1]
+                            except:
+                                continue
 
-                                    if srcIPchange == "true" and dstIPchange == "true":
-                                        print(extractedLine)
+                            if srcIPchange == "true" and dstIPchange == "true":
+                                #print(extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + newSrc + " - " + newDst + " - " +  " - " + extractedLine[11] + " - " + extractedLine[12])
+                                srcIPchange = "false"
+                                dstIPchange = "false"
+
+                                with open("nssmall.txt", 'r') as file:
+                                    for line in file:
+                                        if printed != "true":
+                                            if "Authoritative" not in line:
+                                                if "** server " not in line:
+                                                    ipAddressReverse = str(line.split(".in-addr",1)[0])
+                                                    name = str(line.split("name = ", 1)[-1])
+                                                    try:
+                                                        ipAddressSplit = ipAddressReverse.split(".",4)[3] + "." + ipAddressReverse.split(".",4)[2] + "." + ipAddressReverse.split(".",4)[1] + "." + ipAddressReverse.split(".",4)[0]
+                                                        if srcIP == ipAddressSplit:
+                                                            newSrcNS = name
+                                                            srcIPchange = "true"
+                                                        elif dstIP == ipAddressSplit:
+                                                            newDstNS = name
+                                                            dstIPchange = "true"
+
+                                                        if srcIPchange == "true" and dstIPchange == "true":
+                                                            print(extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + newSrc + " - " + newDst + " - " +  " - " + " - " + newSrcNS + " - " + newDstNS + " - " +  " - " + extractedLine[11] + " - " + extractedLine[12])
+                                                            #added to prevent constant printing
+                                                            srcIPchange = "false"
+                                                            dstIPchange = "false"
+                                                            printed = "true"
+
+                                                            #database output
+                                                            try:
+                                                                #mysql
+                                                                cursor = cnx.cursor()
+                                                                insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name_AS, Destination_Name_AS, Source_Name_nslookup, Destination_Name_nslookup, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)")
+                                                                data = (extractedLine[0], extractedLine[1], extractedLine[4], newSrc, newDst, newSrcNS, newDstNS, extractedLine[11], extractedLine[12])
+                                                                cursor.execute(insertData, data)
+                                                                cursor.close()
+                                                                cnx.commit()
+
+                                                                #mongo
+                                                                myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name_AS" : newSrc, "destination_name_AS" : newDst, "source_name_nslookup" : newSrcNS, "destination_name_nslookup" : newDstNS,"in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
+                                                                insertIntoDB = myCollection.insert_one(myData)
+                                                            except:
+                                                                print("Error inserting data into the database")
+                                                        
+                                                    except:
+                                                        continue
+                                                # if the address is not found then replace the ip address with unknown
+                                                else:
+                                                    ipAddressUnknownRev = str(line.split(".in-addr",1)[0])
+                                                    ipAddressUnknownRev = str(ipAddressUnknownRev.split("** server can't find ",1)[-1])
+                                                    try:
+                                                        ipAddressSplitUnk = ipAddressUnknownRev.split(".",4)[3] + "." + ipAddressUnknownRev.split(".",4)[2] + "." + ipAddressUnknownRev.split(".",4)[1] + "." + ipAddressUnknownRev.split(".",4)[0]
+                                                        if srcIP == ipAddressSplitUnk:
+                                                            newSrcNS = "Unknown"
+                                                            srcIPchange = "true"
+                                                        elif dstIP == ipAddressSplitUnk:
+                                                            newDstNS = "Unknown"
+                                                            dstIPchange = "true"
+
+                                                        if srcIPchange == "true" and dstIPchange == "true":
+                                                            print(extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + newSrc + " - " + newDst + " - " +  " - " + " - " + newSrcNS + " - " + newDstNS + " - " +  " - " + extractedLine[11] + " - " + extractedLine[12])
+                                                            #added to prevent constant printing
+                                                            srcIPchange = "false"
+                                                            dstIPchange = "false"
+                                                            printed = "true"
+                                                            #database output
+                                                            try:
+                                                                #mysql
+                                                                cursor = cnx.cursor()
+                                                                insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name_AS, Destination_Name_AS, Source_Name_nslookup, Destination_Name_nslookup, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)")
+                                                                data = (extractedLine[0], extractedLine[1], extractedLine[4], newSrc, newDst, newSrcNS, newDstNS, extractedLine[11], extractedLine[12])
+                                                                cursor.execute(insertData, data)
+                                                                cursor.close()
+                                                                cnx.commit()
+
+                                                                #mongo
+                                                                myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name_AS" : newSrc, "destination_name_AS" : newDst, "source_name_nslookup" : newSrcNS, "destination_name_nslookup" : newDstNS,"in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
+                                                                insertIntoDB = myCollection.insert_one(myData)
+                                                            except:
+                                                                print("Error inserting data into the database")
+                                                    except:
+                                                        continue
+                                # as not all lines were printed this ensures that each line is printed once the IP addresses are replaced
+                                try:
+                                    if printed == "false":
+                                        if srcIPchange == "true" and dstIPchange == "false":
+                                            newDstNS = "Unknown"
+                                        if dstIPchange == "true" and srcIPchange == "false":
+                                            newSrcNS = "Unknown"
+
+                                        print(extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + newSrc + " - " + newDst + " - " +  " - " + " - " + newSrcNS + " - " + newDstNS + " - " +  " - " + extractedLine[11] + " - " + extractedLine[12])
+
+                                        #added to prevent constant printing
+                                        srcIPchange = "false"
+                                        dstIPchange = "false"
                                         #database output
                                         try:
                                             #mysql
                                             cursor = cnx.cursor()
-                                            insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name, Destination_Name, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s)")
-                                            data = (extractedLine[0], extractedLine[1], extractedLine[4], extractedLine[5], extractedLine[7], extractedLine[11], extractedLine[12])
+                                            insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name_AS, Destination_Name_AS, Source_Name_nslookup, Destination_Name_nslookup, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)")
+                                            data = (extractedLine[0], extractedLine[1], extractedLine[4], newSrc, newDst, newSrcNS, newDstNS, extractedLine[11], extractedLine[12])
                                             cursor.execute(insertData, data)
                                             cursor.close()
                                             cnx.commit()
 
                                             #mongo
-                                            myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name" : extractedLine[5], "destination_name" : extractedLine[7], "in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
-                                            insertIntoDB = myCollection.insert_one(myData)
+                                            myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name_AS" : newSrc, "destination_name_AS" : newDst, "source_name_nslookup" : newSrcNS, "destination_name_nslookup" : newDstNS,"in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
+                                            InsertIntoDB = myCollection.insert_one(myData)
                                         except:
                                             print("Error inserting data into the database")
-                                        #added to prevent constant printing
-                                        srcIPchange = "false"
-                                        dstIPchange = "false"
-                                        printed = "true"
-                                    
                                 except:
                                     continue
-                            # if the address is not found then replace the ip address with unknown
-                            else:
-                                ipAddressUnknownRev = str(line.split(".in-addr",1)[0])
-                                ipAddressUnknownRev = str(ipAddressUnknownRev.split("** server can't find ",1)[-1])
-                                try:
-                                    ipAddressSplitUnk = ipAddressUnknownRev.split(".",4)[3] + "." + ipAddressUnknownRev.split(".",4)[2] + "." + ipAddressUnknownRev.split(".",4)[1] + "." + ipAddressUnknownRev.split(".",4)[0]
-                                    if srcIP == ipAddressSplitUnk:
-                                        extractedLine[5] = "Unknown"
-                                        srcIPchange = "true"
-                                    elif dstIP == ipAddressSplitUnk:
-                                        extractedLine[7] = "Unknown"
-                                        dstIPchange = "true"
 
-                                    if srcIPchange == "true" and dstIPchange == "true":
-                                        print(extractedLine)                                        
-                                        #database output
-                                        try:
-                                            #mySQL
-                                            cursor = cnx.cursor()
-                                            insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name, Destination_Name, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s)")
-                                            data = (extractedLine[0], extractedLine[1], extractedLine[4], extractedLine[5], extractedLine[7], extractedLine[11], extractedLine[12])
-                                            cursor.execute(insertData, data)
-                                            cursor.close()
-                                            cnx.commit()
-
-                                            #mongo
-                                            myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name" : extractedLine[5], "destination_name" : extractedLine[7], "in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
-                                            insertIntoDB = myCollection.insert_one(myData)
-                                        except:
-                                            print("Error inserting data into the database")
-                                        #added to prevent constant printing
-                                        srcIPchange = "false"
-                                        dstIPchange = "false"
-                                        printed = "true"
-                                except:
-                                    continue
-            # as not all lines were printed this ensures that each line is printed once the IP addresses are replaced
-            try:
-                if printed == "false":
-                    if srcIPchange == "true" and dstIPchange == "false":
-                        extractedLine[7] = "Unknown"
-                    if dstIPchange == "true" and srcIPchange == "false":
-                        extractedLine[5] = "Unknown"
-                    print(extractedLine)
-                    
-                    #database output
-                    try:
-                        #mysql
-                        cursor = cnx.cursor()
-                        insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name, Destination_Name, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s)")
-                        data = (extractedLine[0], extractedLine[1], extractedLine[4], extractedLine[5], extractedLine[7], extractedLine[11], extractedLine[12])
-                        cursor.execute(insertData, data)
-                        cursor.close()
-                        cnx.commit()
-
-                        #mongo
-                        myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name" : extractedLine[5], "destination_name" : extractedLine[7], "in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
-                        insertIntoDB = myCollection.insert_one(myData)
-                    except:
-                        print("Error inserting data into the database")
-                    #added to prevent constant printing
-                    srcIPchange = "false"
-                    dstIPchange = "false"
-            except:
-                continue
