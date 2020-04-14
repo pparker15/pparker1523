@@ -1,16 +1,18 @@
 #database connection's
-import mysql.connector
 import pymongo
-cnx = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='network_flows')
 
 mongoCon = pymongo.MongoClient('mongodb://admin:password@192.168.20.31')
 myDatabase = mongoCon["user_profiling"]
-myCollection = myDatabase["nfdumpASNandNS"]
+myCollection = myDatabase["nfdumpWithCategories"]
+
+#categories and application names
+applications = [["facebook", "twitter", "skype", "reddit"], ["bbc", "sky", "yahoo"], ["netflix", "spotify"], ["8-ball pool"], ["akamai", "google", "fastly", "bt", "amazon", "microsoft"]]
+categories = ["social media", "news", "streaming", "online games", "cdn"]
 
 srcIPchange = "false"
 dstIPchange = "false"
 #take the nfdump file and loop through each line extracting the source IP address and destination IP address
-with open("nfdumpTestFile", 'r') as captureFile:
+with open("nfDumpOutput.txt", 'r') as captureFile:
     for captureLine in captureFile:
         printed = "false"
         if "Date" not in captureLine:
@@ -23,7 +25,7 @@ with open("nfdumpTestFile", 'r') as captureFile:
             except:
                 continue
 # this is the asn file
-            with open("asnSmall.txt", 'r') as file:
+            with open("asnOutput.txt", 'r') as file:
                 for line in file:
                     if "Bulk mode; " not in line:
                         if "Error: " not in line:
@@ -45,7 +47,7 @@ with open("nfdumpTestFile", 'r') as captureFile:
                                 srcIPchange = "false"
                                 dstIPchange = "false"
 
-                                with open("nssmall.txt", 'r') as file:
+                                with open("nsOutput.txt", 'r') as file:
                                     for line in file:
                                         if printed != "true":
                                             if "Authoritative" not in line:
@@ -62,27 +64,35 @@ with open("nfdumpTestFile", 'r') as captureFile:
                                                             dstIPchange = "true"
 
                                                         if srcIPchange == "true" and dstIPchange == "true":
-                                                            print(extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + newSrc + " - " + newDst + " - " +  " - " + " - " + newSrcNS + " - " + newDstNS + " - " +  " - " + extractedLine[11] + " - " + extractedLine[12])
+                                                            changed = newSrc.rstrip() + " - " + newDst.rstrip() + " - " + newSrcNS.rstrip() + " - " + newDstNS.rstrip()
+                                                            #print(extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + changed + " - " + extractedLine[11] + " - " + extractedLine[12])
+
                                                             #added to prevent constant printing
                                                             srcIPchange = "false"
                                                             dstIPchange = "false"
                                                             printed = "true"
 
+                                                            # add categories
+                                                            addedCat = "false"
+                                                            for section in applications:
+                                                                appIndex = applications.index(section)
+                                                                for app in section:
+                                                                    if addedCat == "false":
+                                                                        if(app.upper() in changed.upper()):
+                                                                            print(categories[appIndex].upper() + " - " + extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + changed + " - " + extractedLine[11] + " - " + extractedLine[12])
+                                                                            addedCat = "true"
+                                                                            category = categories[appIndex].upper()
+
+                                                                        if(section.index(app) == 5 and appIndex == 4 and addedCat == "false"):
+                                                                            print("Unknown" + " - " + extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + changed + " - " + extractedLine[11] + " - " + extractedLine[12])
+                                                                            category = "Unknown"
                                                             #database output
                                                             try:
-                                                                #mysql
-                                                                cursor = cnx.cursor()
-                                                                insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name_AS, Destination_Name_AS, Source_Name_nslookup, Destination_Name_nslookup, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)")
-                                                                data = (extractedLine[0], extractedLine[1], extractedLine[4], newSrc, newDst, newSrcNS, newDstNS, extractedLine[11], extractedLine[12])
-                                                                cursor.execute(insertData, data)
-                                                                cursor.close()
-                                                                cnx.commit()
-
                                                                 #mongo
-                                                                myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name_AS" : newSrc, "destination_name_AS" : newDst, "source_name_nslookup" : newSrcNS, "destination_name_nslookup" : newDstNS,"in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
+                                                                myData = {"flow_category": category, "flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name_AS" : newSrc, "destination_name_AS" : newDst, "source_name_nslookup" : newSrcNS, "destination_name_nslookup" : newDstNS,"in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
                                                                 insertIntoDB = myCollection.insert_one(myData)
                                                             except:
-                                                                print("Error inserting data into the database")
+                                                                print("1 - Error inserting data into the database")
                                                         
                                                     except:
                                                         continue
@@ -100,26 +110,34 @@ with open("nfdumpTestFile", 'r') as captureFile:
                                                             dstIPchange = "true"
 
                                                         if srcIPchange == "true" and dstIPchange == "true":
-                                                            print(extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + newSrc + " - " + newDst + " - " +  " - " + " - " + newSrcNS + " - " + newDstNS + " - " +  " - " + extractedLine[11] + " - " + extractedLine[12])
+                                                            changed = newSrc.rstrip() + " - " + newDst.rstrip() + " - " + newSrcNS.rstrip() + " - " + newDstNS.rstrip()
+                                                            #print(extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + changed + " - " + extractedLine[11] + " - " + extractedLine[12])
+
+
+                                                            # add categories
+                                                            addedCat = "false"
+                                                            for section in applications:
+                                                                appIndex = applications.index(section)
+                                                                for app in section:
+                                                                    if addedCat == "false":
+                                                                        if(app.upper() in changed.upper()):
+                                                                            print(categories[appIndex].upper() + " - " + extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + changed + " - " + extractedLine[11] + " - " + extractedLine[12])
+                                                                            addedCat = "true"
+                                                                            category = categories[appIndex].upper()
+                                                                        if(section.index(app) == 5 and appIndex == 4 and addedCat == "false"):
+                                                                            print("Unknown" + " - " + extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + changed + " - " + extractedLine[11] + " - " + extractedLine[12])
+                                                                            category = "Unknown"
                                                             #added to prevent constant printing
                                                             srcIPchange = "false"
                                                             dstIPchange = "false"
                                                             printed = "true"
                                                             #database output
                                                             try:
-                                                                #mysql
-                                                                cursor = cnx.cursor()
-                                                                insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name_AS, Destination_Name_AS, Source_Name_nslookup, Destination_Name_nslookup, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)")
-                                                                data = (extractedLine[0], extractedLine[1], extractedLine[4], newSrc, newDst, newSrcNS, newDstNS, extractedLine[11], extractedLine[12])
-                                                                cursor.execute(insertData, data)
-                                                                cursor.close()
-                                                                cnx.commit()
-
                                                                 #mongo
-                                                                myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name_AS" : newSrc, "destination_name_AS" : newDst, "source_name_nslookup" : newSrcNS, "destination_name_nslookup" : newDstNS,"in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
+                                                                myData = {"flow_category": category, "flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name_AS" : newSrc, "destination_name_AS" : newDst, "source_name_nslookup" : newSrcNS, "destination_name_nslookup" : newDstNS,"in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
                                                                 insertIntoDB = myCollection.insert_one(myData)
                                                             except:
-                                                                print("Error inserting data into the database")
+                                                                print("2 - Error inserting data into the database")
                                                     except:
                                                         continue
                                 # as not all lines were printed this ensures that each line is printed once the IP addresses are replaced
@@ -130,26 +148,32 @@ with open("nfdumpTestFile", 'r') as captureFile:
                                         if dstIPchange == "true" and srcIPchange == "false":
                                             newSrcNS = "Unknown"
 
-                                        print(extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + newSrc + " - " + newDst + " - " +  " - " + " - " + newSrcNS + " - " + newDstNS + " - " +  " - " + extractedLine[11] + " - " + extractedLine[12])
+                                        changed = newSrc.rstrip() + " - " + newDst.rstrip() + " - " + newSrcNS.rstrip() + " - " + newDstNS.rstrip()
+                                        #print(extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + changed + " - " + extractedLine[11] + " - " + extractedLine[12])
 
+                                        # add categories
+                                        addedCat = "false"
+                                        for section in applications:
+                                            appIndex = applications.index(section)
+                                            for app in section:
+                                                if addedCat == "false":
+                                                    if(app.upper() in changed.upper()):
+                                                        print(categories[appIndex].upper() + " - " + extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + changed + " - " + extractedLine[11] + " - " + extractedLine[12])
+                                                        addedCat = "true"
+                                                        category = categories[appIndex].upper()
+
+                                                    if(section.index(app) == 5 and appIndex == 4 and addedCat == "false"):
+                                                        print("Unknown" + " - " + extractedLine[0] + " - " + extractedLine[1] + " - " + extractedLine[4] + " - " + changed + " - " + extractedLine[11] + " - " + extractedLine[12])
+                                                        category = "Unknown"
                                         #added to prevent constant printing
                                         srcIPchange = "false"
                                         dstIPchange = "false"
                                         #database output
                                         try:
-                                            #mysql
-                                            cursor = cnx.cursor()
-                                            insertData = ("INSERT INTO nfdump_data (Flow_Date, Flow_Time, Protocol, Source_Name_AS, Destination_Name_AS, Source_Name_nslookup, Destination_Name_nslookup, In_bytes, Out_bytes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)")
-                                            data = (extractedLine[0], extractedLine[1], extractedLine[4], newSrc, newDst, newSrcNS, newDstNS, extractedLine[11], extractedLine[12])
-                                            cursor.execute(insertData, data)
-                                            cursor.close()
-                                            cnx.commit()
-
-                                            #mongo
-                                            myData = {"flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name_AS" : newSrc, "destination_name_AS" : newDst, "source_name_nslookup" : newSrcNS, "destination_name_nslookup" : newDstNS,"in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
+                                            mongo
+                                            myData = {"flow_category": category, "flow_date" : extractedLine[0], "flow_time" : extractedLine[1], "protocol" : extractedLine[4], "source_name_AS" : newSrc, "destination_name_AS" : newDst, "source_name_nslookup" : newSrcNS, "destination_name_nslookup" : newDstNS,"in_bytes" : extractedLine[11], "out_bytes" : extractedLine[12]}
                                             InsertIntoDB = myCollection.insert_one(myData)
                                         except:
-                                            print("Error inserting data into the database")
+                                            print("3 - Error inserting data into the database")
                                 except:
                                     continue
-
