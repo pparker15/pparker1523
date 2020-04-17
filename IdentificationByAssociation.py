@@ -75,7 +75,7 @@ newStart = 0
 secondNum = 0
 for time in facebookTime:
     if previous != " ":
-        newTime = previous + timedelta(seconds = 25)
+        newTime = previous + timedelta(seconds = 15)
         #print(time, newTime)
         # Less than
         if(time <= newTime):
@@ -96,70 +96,40 @@ for time in facebookTime:
 num = -1
 for element in newTimesList:
     length = len(element) - 1
+    num += 1
     if(length >= 6):
-        num += 1
-        StartTimes.append([])
         startTime = newTimesList[num][0]
         endTime = newTimesList[num][length]
-        StartTimes[num].append((str(startTime) + "/" + str(endTime)))
-        #StartTimes[num].append(newTimesList[num][length])
-    #print(len(element))
-                
-for element in StartTimes:
-    print("Start and end Times in different sections")
-    for time in element:
-        print(time)
-        splitTime = time.split("/")
-        #print(splitTime)
-
-        # PRINT OUT STUFF
-        with open("AfterSpotify.txt") as file:
-            for line in file:
-                if "STREAMING" not in line:
-                    if "NEWS" not in line:
-                        if "TWITTER" not in line:
-                            splitLine = line.split()
-                            if "SOCIAL MEDIA" in line:
-                                lineTime = splitLine[3] + " " + splitLine[5]
-                                #lineTime = datetime.strptime(lineTime, '%Y-%m-%d %H:%M:%S.%f')
-                            else:
-                                lineTime = splitLine[2] + " " + splitLine[4]
-                                #lineTime = datetime.strptime(lineTime, '%Y-%m-%d %H:%M:%S.%f')
-                           
-                            if lineTime >= splitTime[0] and lineTime <= splitTime[1]:
-                                fileOut = open("AfterFacebook.txt", "a")
-                                fileOut.write(str(line.rstrip() + " - " + "***ASSOCIATED FACEBOOK***"))
-                                fileOut.write('\n')
-                                fileOut.close()
-                            else:
-                                fileOut = open("AfterFacebook.txt", "a")
-                                fileOut.write(str(line))
-                                fileOut.close()
-                        else:
-                            fileOut = open("AfterFacebook.txt", "a")
-                            fileOut.write(str(line))
-                            fileOut.close()
-                    else:
-                        fileOut = open("AfterFacebook.txt", "a")
-                        fileOut.write(str(line))
-                        fileOut.close()
-                else:
-                    fileOut = open("AfterFacebook.txt", "a")
-                    fileOut.write(str(line))
-                    fileOut.close()
-
-            
-    
+        StartTimes.append((str(startTime) + "/" + str(endTime)))
 
 
 
-
-# have a minimum of 6 to become a new instance of facebook
-
-
-# after 15 seconds in between times stop but start again between the next time period until the end of the list is reached
-
-
-# stop and go to the next identifier
-                     
-
+numTime = 0
+with open("AfterSpotify.txt") as file:
+    for line in file:
+        times = StartTimes[numTime]
+        splitTime = times.split("/")
+        lineSplit = line.split()
+        if "SOCIAL MEDIA" in line:
+            lineTime = lineSplit[3] + " " + lineSplit[5]
+        else:
+            lineTime = lineSplit[2] + " " + lineSplit[4]
+        if lineTime + "000" >= splitTime[0] and lineTime + "000" <= splitTime[1]:
+            if "STREAMING" or "NEWS" or "TWITTER" not in line:
+                fileOut = open("AfterFacebook.txt", "a")
+                fileOut.write(str(line.rstrip() + " - " + "***ASSOCIATED FACEBOOK***"))
+                fileOut.write('\n')
+                fileOut.close()
+        else:
+            # Prints out the beginning of the file but not the end. Why?
+            fileOut = open("AfterFacebook.txt", "a")
+            fileOut.write(line.rstrip())
+            fileOut.write('\n')
+            fileOut.close()
+        if lineTime + "000" == splitTime[1]:
+            print(numTime, len(StartTimes))
+            comNum = len(StartTimes) - 1
+            print(numTime, comNum)
+            if numTime != comNum:
+                numTime += 1
+                print("NUMTIME USED")
