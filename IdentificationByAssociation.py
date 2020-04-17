@@ -6,6 +6,9 @@ spotify = "n"
 spotifyTime = []
 facebookTime = []
 previousTime = " "
+
+# SPOTIFY
+
 # Check to see if there is a streaming service running in the file.
 # Do I need to only get the last request time not response time?
 with open("spotifyfacebooktwitterbbcsky.txt") as file:
@@ -53,56 +56,89 @@ with open("spotifyfacebooktwitterbbcsky.txt") as file:
         else:
             fileOut = open("AfterSpotify.txt", "a")
             fileOut.write(str(line))
-            fileOut.close()    
+            fileOut.close()
 
+
+# look for facebook in the line and add the time to a list.
 with open("AfterSpotify.txt") as file:
-    number = -1
     for line in file:
         if "FACEBOOK" in line:
-            facebook = "y"
             splitLine = line.split()
-            newTime = datetime.strptime(splitLine[3] + " " + splitLine[5], '%Y-%m-%d %H:%M:%S.%f')
-            # if 15 seconds later than previous stop counting facebook.
-            # what happens if used  twice within the same document. This is what the main script is needed for. this is just a test. Proper development comes later.
-            # just assume once for now.
-            if previousTime != " ":
-                testTime = previousTime + timedelta(seconds = 15)
-                if newTime <= testTime:
-                    facebookTime.append(newTime)
-                    #print(splitLine[3] + " " + splitLine[5])
+            facebookTime.append(datetime.strptime(splitLine[3] + " " + splitLine[5], '%Y-%m-%d %H:%M:%S.%f'))
 
-            previousTime = datetime.strptime(splitLine[3] + " " + splitLine[5], '%Y-%m-%d %H:%M:%S.%f')
-            number +=1
 previous = " "
-num = 0
+StartTimes = []
+newTimesList = []
+newTimesList.append([])
+loopNum = 0
+newStart = 0
+secondNum = 0
 for time in facebookTime:
     if previous != " ":
-        previous = previous + timedelta(seconds = 15)
-        if time <= previous:
-            print(time)
-            num += 1
+        newTime = previous + timedelta(seconds = 25)
+        #print(time, newTime)
+        # Less than
+        if(time <= newTime):
+            #loopNum +=1
+            #print(loopNum)
+            newTimesList[secondNum].append(time)
         else:
-            facebookTime.remove(time)
-    previous = time
+            #StartTimes.append(facebookTime.index(time))
+            newTimesList.append([])
+            secondNum += 1
+            newTimesList[secondNum].append(time)
+        previous = time
+    else:
+        previous = time
+        newTimesList[secondNum].append(time)
 
-with open("AfterSpotify.txt") as file:
-    for line in file:
-        if "STREAMING" not in line:
-            if "NEWS" not in line:
-                if "TWITTER" not in line:
-                    splitLine = line.split()
-                    if "SOCIAL MEDIA" in line:
-                        lineTime = splitLine[3] + " " + splitLine[5]
-                        lineTime = datetime.strptime(lineTime, '%Y-%m-%d %H:%M:%S.%f')
-                    else:
-                        lineTime = splitLine[2] + " " + splitLine[4]
-                        lineTime = datetime.strptime(lineTime, '%Y-%m-%d %H:%M:%S.%f')
-                   
-                    if lineTime >= facebookTime[0] and lineTime <= facebookTime[num]:
-                        fileOut = open("AfterFacebook.txt", "a")
-                        fileOut.write(str(line.rstrip() + " - " + "***ASSOCIATED FACEBOOK***"))
-                        fileOut.write('\n')
-                        fileOut.close()
+#print(len(newTimesList[0]))
+num = -1
+for element in newTimesList:
+    length = len(element) - 1
+    if(length >= 6):
+        num += 1
+        StartTimes.append([])
+        startTime = newTimesList[num][0]
+        endTime = newTimesList[num][length]
+        StartTimes[num].append((str(startTime) + "/" + str(endTime)))
+        #StartTimes[num].append(newTimesList[num][length])
+    #print(len(element))
+                
+for element in StartTimes:
+    print("Start and end Times in different sections")
+    for time in element:
+        print(time)
+        splitTime = time.split("/")
+        #print(splitTime)
+
+        # PRINT OUT STUFF
+        with open("AfterSpotify.txt") as file:
+            for line in file:
+                if "STREAMING" not in line:
+                    if "NEWS" not in line:
+                        if "TWITTER" not in line:
+                            splitLine = line.split()
+                            if "SOCIAL MEDIA" in line:
+                                lineTime = splitLine[3] + " " + splitLine[5]
+                                #lineTime = datetime.strptime(lineTime, '%Y-%m-%d %H:%M:%S.%f')
+                            else:
+                                lineTime = splitLine[2] + " " + splitLine[4]
+                                #lineTime = datetime.strptime(lineTime, '%Y-%m-%d %H:%M:%S.%f')
+                           
+                            if lineTime >= splitTime[0] and lineTime <= splitTime[1]:
+                                fileOut = open("AfterFacebook.txt", "a")
+                                fileOut.write(str(line.rstrip() + " - " + "***ASSOCIATED FACEBOOK***"))
+                                fileOut.write('\n')
+                                fileOut.close()
+                            else:
+                                fileOut = open("AfterFacebook.txt", "a")
+                                fileOut.write(str(line))
+                                fileOut.close()
+                        else:
+                            fileOut = open("AfterFacebook.txt", "a")
+                            fileOut.write(str(line))
+                            fileOut.close()
                     else:
                         fileOut = open("AfterFacebook.txt", "a")
                         fileOut.write(str(line))
@@ -111,11 +147,19 @@ with open("AfterSpotify.txt") as file:
                     fileOut = open("AfterFacebook.txt", "a")
                     fileOut.write(str(line))
                     fileOut.close()
-            else:
-                fileOut = open("AfterFacebook.txt", "a")
-                fileOut.write(str(line))
-                fileOut.close()
-        else:
-            fileOut = open("AfterFacebook.txt", "a")
-            fileOut.write(str(line))
-            fileOut.close()
+
+            
+    
+
+
+
+
+# have a minimum of 6 to become a new instance of facebook
+
+
+# after 15 seconds in between times stop but start again between the next time period until the end of the list is reached
+
+
+# stop and go to the next identifier
+                     
+
