@@ -6,8 +6,8 @@ twitterTime = []
 bbcTime = []
 
 # SPOTIFY
-
-with open("spotifyfacebooktwitterbbcsky.txt") as file:
+print("Identifying traffic associated with Spotify")
+with open("nfDumpFinalOutput.txt") as file:
     number = -1
     for line in file:
         if "SPOTIFY" in line:
@@ -48,7 +48,7 @@ for element in newTimesList:
         StartTimes.append((str(startTime) + "/" + str(endTime)))
 
 numTime = 0
-with open("spotifyfacebooktwitterbbcsky.txt") as file:
+with open("nfDumpFinalOutput.txt") as file:
     for line in file:
         if "SOCIAL MEDIA" not in line:
             if "NEWS" not in line:
@@ -77,7 +77,7 @@ with open("spotifyfacebooktwitterbbcsky.txt") as file:
                 numTime += 1
 
 # FACEBOOK
-
+print("Identifying traffic associated with Facebook")
 # look for facebook in the line and add the time to a list.
 with open("AfterSpotify.txt") as file:
     for line in file:
@@ -133,7 +133,7 @@ with open("AfterSpotify.txt") as file:
         else:
             lineTime = lineSplit[2] + " " + lineSplit[4]
         if lineTime + "000" >= splitTime[0] and lineTime + "000" <= splitTime[1]:
-            if "STREAMING" or "NEWS" or "TWITTER" not in line:
+            if "STREAMING" not in line:
                 fileOut = open("AfterFacebook.txt", "a")
                 fileOut.write(str(line.rstrip() + " - " + "***ASSOCIATED FACEBOOK***"))
                 fileOut.write('\n')
@@ -145,13 +145,12 @@ with open("AfterSpotify.txt") as file:
             fileOut.write('\n')
             fileOut.close()
         if lineTime + "000" == splitTime[1]:
-            print(numTime, len(StartTimes))
             comNum = len(StartTimes) - 1
-            print(numTime, comNum)
             if numTime != comNum:
                 numTime += 1
 
 # TWITTER
+print("Identifying traffic associated with Twitter")
 # look for twitter in the line and add the time to a list.
 with open("AfterFacebook.txt") as file:
     for line in file:
@@ -202,7 +201,7 @@ with open("AfterFacebook.txt") as file:
         else:
             lineTime = lineSplit[2] + " " + lineSplit[4]
         if lineTime + "000" >= splitTime[0] and lineTime + "000" <= splitTime[1]:
-            if "STREAMING" or "NEWS" or "FACEBOOK" not in line:
+            if "STREAMING" not in line:
                 fileOut = open("AfterTwitter.txt", "a")
                 fileOut.write(str(line.rstrip() + " - " + "***ASSOCIATED TWITTER***"))
                 fileOut.write('\n')
@@ -214,13 +213,12 @@ with open("AfterFacebook.txt") as file:
             fileOut.write('\n')
             fileOut.close()
         if lineTime + "000" == splitTime[1]:
-            print(numTime, len(StartTimes))
             comNum = len(StartTimes) - 1
-            print(numTime, comNum)
             if numTime != comNum:
                 numTime += 1
 
 # BBC
+print("Identifying traffic associated with BBC")
 # look for BBC in the line and add the time to a list.
 with open("AfterTwitter.txt") as file:
     for line in file:
@@ -271,7 +269,7 @@ with open("AfterTwitter.txt") as file:
         else:
             lineTime = lineSplit[2] + " " + lineSplit[4]
         if lineTime + "000" >= splitTime[0] and lineTime + "000" <= splitTime[1]:
-            if "STREAMING" or "SOCIAL MEDIA" not in line:
+            if "STREAMING" not in line:
                 fileOut = open("AfterBBC.txt", "a")
                 fileOut.write(str(line.rstrip() + " - " + "***ASSOCIATED BBC***"))
                 fileOut.write('\n')
@@ -283,8 +281,6 @@ with open("AfterTwitter.txt") as file:
             fileOut.write('\n')
             fileOut.close()
         if lineTime + "000" == splitTime[1]:
-            print(numTime, len(StartTimes))
             comNum = len(StartTimes) - 1
-            print(numTime, comNum)
             if numTime != comNum:
                 numTime += 1
