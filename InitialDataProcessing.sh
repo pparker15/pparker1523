@@ -1,22 +1,18 @@
 #!/bin/bash
 
-DIR="/home/user/Desktop/categoryTest/data/"
+DIR="/home/user/Desktop/TestBBC/data/"
 for FILE in "$DIR"*
 do
 	echo $FILE
-   	nfpcapd -l /home/user/Desktop/categoryTest/data/processed -r $FILE
+   	nfpcapd -l /home/user/Desktop/TestBBC/data/processed -r $FILE
 	nfpcapd
 done
 
-cd '/home/user/Desktop/categoryTest/'
+cd '/home/user/Desktop/TestBBC/'
 
 echo 'running nfdump'
 
-nfdump -R /home/user/Desktop/categoryTest/data/processed/ > nfDumpToSort.txt
-
-echo "Sorting nfdump output"
-sort -k 2 nfDumpToSort.txt > nfDumpOutput.txt
-
+nfdump -R /home/user/Desktop/TestBBC/data/processed/ > nfDumpOutput.txt
 
 #create file for python to put text into
 echo > ipAddressesPython.txt
@@ -34,4 +30,15 @@ echo 'Getting name from AS'
 netcat whois.cymru.com 43 < sortOutput.txt | sort -n > asnOutput.txt
 
 echo 'replacing IP addresses'
-python mergeFilesV8.py
+python mergeFilesV8.py > mergedFiles.txt
+
+echo "Sorting nfdump output and removing LAN data"
+sed -i '/dsldevice.lan./d' ./mergedFiles.txt
+sed -i '/ICMP/d' ./mergedFiles.txt
+sort -k 3 mergedFiles.txt > nfDumpFinalOutput.txt
+
+echo "Associating unknown/CDN flows with known applications"
+python identificationByAssociation.py
+
+echo "Removing files no longer needed"
+rm AfterFacebook.txt AfterSpotify.txt AfterTwitter.txt asnOutput.txt ipAddressesPython.txt mergedFiles.txt nfDumpOutput.txt nsOutput.txt sortOutput.txt 
