@@ -1,4 +1,9 @@
+import mysql.connector
 from datetime import datetime, timedelta, time
+import outputData
+
+connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
+
 spotifyTime = []
 facebookTime = []
 previousTime = " "
@@ -59,18 +64,11 @@ with open("nfDumpFinalOutput.txt") as file:
                 splitLine = line.split()
                 lineTime = splitLine[2] + " " + splitLine[4]
                 if lineTime + "000" >= splitTime[0] and lineTime + "000" <= splitTime[1]:
-                    fileOut = open("AfterSpotify.txt", "a")
-                    fileOut.write(str(line.rstrip() + " - " + "***ASSOCIATED SPOTIFY***"))
-                    fileOut.write('\n')
-                    fileOut.close()
+                    outputData.outputFile(line, "SPOTIFY", "AfterSpotify.txt")
             else:
-                fileOut = open("AfterSpotify.txt", "a")
-                fileOut.write(str(line))
-                fileOut.close()
+                outputData.outputFile(line, " ", "AfterSpotify.txt")
         else:
-            fileOut = open("AfterSpotify.txt", "a")
-            fileOut.write(str(line))
-            fileOut.close()
+            outputData.outputFile(line, " ", "AfterSpotify.txt")
         if lineTime + "000" == splitTime[1]:
             comNum = len(StartTimes) - 1
             if numTime != comNum:
@@ -134,16 +132,9 @@ with open("AfterSpotify.txt") as file:
             lineTime = lineSplit[2] + " " + lineSplit[4]
         if lineTime + "000" >= splitTime[0] and lineTime + "000" <= splitTime[1]:
             if "STREAMING" not in line:
-                fileOut = open("AfterFacebook.txt", "a")
-                fileOut.write(str(line.rstrip() + " - " + "***ASSOCIATED FACEBOOK***"))
-                fileOut.write('\n')
-                fileOut.close()
+                outputData.outputFile(line, "FACEBOOK", "AfterFacebook.txt")
         else:
-            # Prints out the beginning of the file but not the end. Why?
-            fileOut = open("AfterFacebook.txt", "a")
-            fileOut.write(line.rstrip())
-            fileOut.write('\n')
-            fileOut.close()
+            outputData.outputFile(line, " ", "AfterFacebook.txt")
         if lineTime + "000" == splitTime[1]:
             comNum = len(StartTimes) - 1
             if numTime != comNum:
@@ -202,16 +193,9 @@ with open("AfterFacebook.txt") as file:
             lineTime = lineSplit[2] + " " + lineSplit[4]
         if lineTime + "000" >= splitTime[0] and lineTime + "000" <= splitTime[1]:
             if "STREAMING" not in line:
-                fileOut = open("AfterTwitter.txt", "a")
-                fileOut.write(str(line.rstrip() + " - " + "***ASSOCIATED TWITTER***"))
-                fileOut.write('\n')
-                fileOut.close()
+                outputData.outputFile(line, "TWITTER", "AfterTwitter.txt")
         else:
-            # Prints out the beginning of the file but not the end. Why?
-            fileOut = open("AfterTwitter.txt", "a")
-            fileOut.write(line.rstrip())
-            fileOut.write('\n')
-            fileOut.close()
+            outputData.outputFile(line, " ", "AfterTwitter.txt")
         if lineTime + "000" == splitTime[1]:
             comNum = len(StartTimes) - 1
             if numTime != comNum:
@@ -270,17 +254,12 @@ with open("AfterTwitter.txt") as file:
             lineTime = lineSplit[2] + " " + lineSplit[4]
         if lineTime + "000" >= splitTime[0] and lineTime + "000" <= splitTime[1]:
             if "STREAMING" not in line:
-                fileOut = open("AfterBBC.txt", "a")
-                fileOut.write(str(line.rstrip() + " - " + "***ASSOCIATED BBC***"))
-                fileOut.write('\n')
-                fileOut.close()
+                line = line.rstrip() + " - " + "BBC"
+                outputData.database(line, connection)
         else:
-            # Prints out the beginning of the file but not the end. Why?
-            fileOut = open("AfterBBC.txt", "a")
-            fileOut.write(line.rstrip())
-            fileOut.write('\n')
-            fileOut.close()
+            outputData.database(line.rstrip(), connection)
         if lineTime + "000" == splitTime[1]:
             comNum = len(StartTimes) - 1
             if numTime != comNum:
                 numTime += 1
+
