@@ -1,109 +1,70 @@
-import pymongo
-import CategoriesDatabase
-
-# Database connections - added here to prevent continuous connections.
-mongoCon = pymongo.MongoClient('mongodb://admin:password@192.168.20.31')
-myDatabase = mongoCon["user_profiling"]
-myCollection = myDatabase["moduleTest"]
-
-srcIPchange = "false"
-dstIPchange = "false"
-
-# Take the nfdump file and loop through each line extracting the source IP address and destination IP address.
+# database connection
+import mysql.connector
+from mysql.connector import Error
+connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
+srcName = " "
+dstName = " "
+# loop through nfdump file
 with open("nfDumpOutput.txt", 'r') as captureFile:
     for captureLine in captureFile:
-        printed = "false"
         if "Date" not in captureLine:
-            extractedLine = captureLine.split()
-            try:
-                srcIP = extractedLine[5]
-                dstIP = extractedLine[7]
-                srcIP = str(srcIP.split(":",1)[0])
-                dstIP = str(dstIP.split(":",1)[0])
-            except:
-                continue
-            
-            # Extract the name from the whois output.
-            with open("asnOutput.txt", 'r') as file:
-                for line in file:
-                    if "Bulk mode; " not in line:
-                        if "Error: " not in line:
-                            asnLine = line.split()
+            if "Summary" not in captureLine:
+                if "Time" not in captureLine:
+                    if "Total" not in captureLine:
+                        if "Sys:" not in captureLine:
+                            extractedLine = captureLine.split()
                             try:
-                                if srcIP == asnLine[2]:
-                                    srcIPchange = "true"
-                                    newSrc = line.split("|")[-1]
-                                elif dstIP == asnLine[2]:
-                                    dstIPchange = "true"
-                                    newDst = line.split("|")[-1]
+                                srcIP = extractedLine[5]
+                                dstIP = extractedLine[7]
+                                srcIP = str(srcIP.split(":",1)[0])
+                                dstIP = str(dstIP.split(":",1)[0])
                             except:
                                 continue
+                # Get source and destination name from the database
+                            
+                            try:
+                                getSrcName = connection.cursor()
+                                query = "SELECT application_type.Application_name, name_table.IP_address FROM application_type INNER JOIN name_table ON name_table.App_ID = application_type.App_ID WHERE name_table.IP_address = %s";
+                                data = (" " + srcIP,)     
+                                getSrcName.execute(query, data)
+                                result = getSrcName.fetchone()
+                                if result is not None:
+                                    srcName = result[0]
+                                getSrcName.close()
+                            except Error as e:
+                                print(e)
 
-                            if srcIPchange == "true" and dstIPchange == "true":
-                                srcIPchange = "false"
-                                dstIPchange = "false"
+                            try:
+                                getDstName = connection.cursor()
+                                query2 = "SELECT application_type.Application_name, name_table.IP_address FROM application_type INNER JOIN name_table ON name_table.App_ID = application_type.App_ID WHERE name_table.IP_address = %s";
+                                data2 = (" " + dstIP,)     
+                                getDstName.execute(query2, data2)
+                                result2 = getDstName.fetchone()
+                                if result2 is not None:
+                                    dstName = result2[0]
+                                getDstName.close()
+                            except Error as e:
+                                print(e)
 
-                                # Extract the name from the nslookup file
-                                with open("nsOutput.txt", 'r') as file:
-                                    for line in file:
-                                        if printed != "true":
-                                            if "Authoritative" not in line:
-                                                if "** server " not in line:
-                                                    ipAddressReverse = str(line.split(".in-addr",1)[0])
-                                                    name = str(line.split("name = ", 1)[-1])
-                                                    try:
-                                                        ipAddressSplit = ipAddressReverse.split(".",4)[3] + "." + ipAddressReverse.split(".",4)[2] + "." + ipAddressReverse.split(".",4)[1] + "." + ipAddressReverse.split(".",4)[0]
-                                                        if srcIP == ipAddressSplit:
-                                                            newSrcNS = name
-                                                            srcIPchange = "true"
-                                                        elif dstIP == ipAddressSplit:
-                                                            newDstNS = name
-                                                            dstIPchange = "true"
+                # output to database
+                            try:
+                                insertFlow = connection.cursor()
+                                query3 = "INSERT INTO Flows (FLow_Date_Time, Source_Name, Destination_Name) VALUES (%s, %s, %s)"
+                                if srcName != " " and dstName != " ":
+                                    data = (extractedLine[0] + " " + extractedLine[1], srcName, dstName)
+                                elif srcName != " " and dstName == " ":
+                                    data = (extractedLine[0] + " " + extractedLine[1], srcName, "Unknown")
+                                elif srcName == " " and dstName != " ":
+                                    data = (extractedLine[0] + " " + extractedLine[1], "Unknown", dstName)
+                                else:
+                                    data = (extractedLine[0] + " " + extractedLine[1], "Unknown", "Unknown")
+                                insertFlow.execute(query3, data)
+                                print(data)
+                                srcName = " "
+                                dstName = " "
+                                connection.commit()
+                                insertFlow.close()
+                            except Error as e:
+                                print(e)
 
-                                                        if srcIPchange == "true" and dstIPchange == "true":
-                                                            changed = newSrc.rstrip() + " - " + newDst.rstrip() + " - " + newSrcNS.rstrip() + " - " + newDstNS.rstrip()
-                                                            # Added to prevent constant printing.
-                                                            srcIPchange = "false"
-                                                            dstIPchange = "false"
-                                                            printed = "true"
 
-                                                            # Identify the categories and add a new document to the database.
-                                                            CategoriesDatabase.categoriesAndAddToDatabase(extractedLine, newSrc, newDst, newSrcNS, newDstNS, changed, myCollection)
-                                                        
-                                                    except:
-                                                        continue
-                                                    
-                                                # If the address is not found, replace the ip address with unknown.
-                                                else:
-                                                    ipAddressUnknownRev = str(line.split(".in-addr",1)[0])
-                                                    ipAddressUnknownRev = str(ipAddressUnknownRev.split("** server can't find ",1)[-1])
-                                                    try:
-                                                        ipAddressSplitUnk = ipAddressUnknownRev.split(".",4)[3] + "." + ipAddressUnknownRev.split(".",4)[2] + "." + ipAddressUnknownRev.split(".",4)[1] + "." + ipAddressUnknownRev.split(".",4)[0]
-                                                        if srcIP == ipAddressSplitUnk:
-                                                            newSrcNS = "Unknown"
-                                                            srcIPchange = "true"
-                                                        elif dstIP == ipAddressSplitUnk:
-                                                            newDstNS = "Unknown"
-                                                            dstIPchange = "true"
-
-                                                        if srcIPchange == "true" and dstIPchange == "true":
-                                                            changed = newSrc.rstrip() + " - " + newDst.rstrip() + " - " + newSrcNS.rstrip() + " - " + newDstNS.rstrip()
-
-                                                            # Identify the categories and add a new document to the database.
-                                                            CategoriesDatabase.categoriesAndAddToDatabase(extractedLine, newSrc, newDst, newSrcNS, newDstNS, changed, myCollection)
-                                                    except:
-                                                        continue
-                                # As not all lines were printed, this ensures that each line is printed once the IP addresses are replaced.
-                                try:
-                                    if printed == "false":
-                                        if srcIPchange == "true" and dstIPchange == "false":
-                                            newDstNS = "Unknown"
-                                        if dstIPchange == "true" and srcIPchange == "false":
-                                            newSrcNS = "Unknown"
-
-                                        changed = newSrc.rstrip() + " - " + newDst.rstrip() + " - " + newSrcNS.rstrip() + " - " + newDstNS.rstrip()
-
-                                        # Identify the categories and add a new document to the database.
-                                        CategoriesDatabase.categoriesAndAddToDatabase(extractedLine, newSrc, newDst, newSrcNS, newDstNS, changed, myCollection)
-                                except:
-                                    continue
