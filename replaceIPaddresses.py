@@ -47,24 +47,55 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                             except Error as e:
                                 print(e)
 
-                # output to database
+                # Categorise the flow
+                            # check the category of the source and destination
+                            # the one that isn't USERS or NETWORK is to be used
+
+                            srcCat = connection.cursor()
+                            srcQuery = "SELECT Category FROM application_type WHERE application_name = %s"
+                            data = (srcName,)
+                            srcCat.execute(srcQuery, data)
+                            result = srcCat.fetchone()
+
+                            dstCat = connection.cursor()
+                            dstQuery = "SELECT Category FROM application_type WHERE application_name = %s"
+                            ddata = (dstName,)
+                            dstCat.execute(dstQuery, ddata)
+                            dresult = dstCat.fetchone()
+                            if (dresult is None) or (result is None):
+                                category = "UNKNOWN"
+                            elif (dresult[0] == "USERS" or dresult[0] == "NETWORK") and (result[0] == "USERS" or result[0] == "NETWORK"):
+                                category = "NETWORK"
+                                print(category)
+                            elif(dresult[0] == "USERS" or dresult[0] == "NETWORK") and (result[0] != "USERS" or result[0] != "NETWORK"):
+                                category = result[0]
+                                print(category)
+                            elif(dresult[0] != "USERS" or dresult[0] != "NETWORK") and (result[0] == "USERS" or result[0] == "NETWORK"):
+                                category = dresult[0]
+                                print(category)
+
+                # output to database - need to still output nslookup or as name
                             try:
                                 insertFlow = connection.cursor()
-                                query3 = "INSERT INTO Flows (FLow_Date_Time, Source_Name, Destination_Name) VALUES (%s, %s, %s)"
+                                query3 = "INSERT INTO Flows (FLow_Date_Time, Source_Name, Destination_Name, Flow_Category) VALUES (%s, %s, %s, %s)"
                                 if srcName != " " and dstName != " ":
-                                    data = (extractedLine[0] + " " + extractedLine[1], srcName, dstName)
+                                    data3 = (extractedLine[0] + " " + extractedLine[1], srcName, dstName, category)
                                 elif srcName != " " and dstName == " ":
-                                    data = (extractedLine[0] + " " + extractedLine[1], srcName, "Unknown")
+                                    data3 = (extractedLine[0] + " " + extractedLine[1], srcName, "NA", category)
                                 elif srcName == " " and dstName != " ":
-                                    data = (extractedLine[0] + " " + extractedLine[1], "Unknown", dstName)
+                                    data3 = (extractedLine[0] + " " + extractedLine[1], "NA", dstName, category)
                                 else:
-                                    data = (extractedLine[0] + " " + extractedLine[1], "Unknown", "Unknown")
-                                insertFlow.execute(query3, data)
-                                print(data)
+                                    data3 = (extractedLine[0] + " " + extractedLine[1], "NA", "NA", category)
+                                        
+                                insertFlow.execute(query3, data3)
+                                print(data3)
                                 srcName = " "
                                 dstName = " "
                                 connection.commit()
                                 insertFlow.close()
                             except Error as e:
                                 print(e)
+                            
+
+
                           
