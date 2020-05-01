@@ -1,17 +1,32 @@
 import mysql.connector
 from mysql.connector import Error
 connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
-
 with open("asnOutput.txt", 'r') as file:
     for line in file:
         if "Bulk mode; " not in line:
             if "Error: " not in line:
                 if "AS" not in line:
                     try:
+                        aID = " "
                         asnLine = line.split('|')
+                        try:
+                            AppID = connection.cursor()
+                            query4 = "SELECT * FROM Identify_apps"
+                            AppID.execute(query4)
+                            result4 = AppID.fetchall()
+                            printed = " "
+                            for r in result4:
+                                if r[1] in asnLine[2] and printed != "true":
+                                    aID = r[0]
+                                    printed = "true"
+                                elif printed != "true":
+                                    aID = r[0]
+                                
+                        except Error as e:
+                            print(e)
                         cursor = connection.cursor()
-                        insertData = ("INSERT INTO name_table (IP_address, AS_name, AS_number, NS_name) VALUES (%s, %s, %s, 'NA')")
-                        data = (asnLine[1], asnLine[2], asnLine[0])
+                        insertData = ("INSERT INTO name_table (IP_address, AS_name, NS_name, App_ID) VALUES (%s, %s, 'NA', %s)")
+                        data = (asnLine[1], asnLine[2], aID)
                         cursor.execute(insertData, data)
                         cursor.close()
                         connection.commit()
@@ -33,10 +48,25 @@ with open("nsOutput.txt", 'r') as file:
                         cursor.execute(updateData, data)
                         connection.commit()
                         if cursor.rowcount == 0:
+                            try:
+                                AppID = connection.cursor()
+                                query5 = "SELECT * FROM Identify_apps"
+                                AppID.execute(query5)
+                                result5 = AppID.fetchall()
+                                printed = " "
+                                for r in result5:
+                                    if r[1] in name and printed != "true":
+                                        aID = r[0]
+                                        printed = "true"
+                                    elif printed != "true":
+                                        aID = r[0]
+                                
+                            except Error as e:
+                                print(e)
                             cursor2 = connection.cursor()
-                            insertData = ("INSERT INTO name_table (IP_address, AS_name, AS_number, NS_name) VALUES (%s, 'NA', 'NA', %s)")
-                            data = (ipAddressSplit, name)
-                            cursor.execute(insertData, data)
+                            insertData = ("INSERT INTO name_table (IP_address, AS_name, NS_name, App_ID) VALUES (%s, 'NA', %s, %s)")
+                            data = (ipAddressSplit, name, aID)
+                            cursor2.execute(insertData, data)
                             cursor2.close()
                         cursor.close()
                     except Error as e: 
