@@ -2,6 +2,7 @@
 import mysql.connector
 from mysql.connector import Error
 connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
+
 srcName = " "
 dstName = " "
 # loop through nfdump file
@@ -21,22 +22,22 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                             except:
                                 continue
                 # Get source and destination name from the database
-                            
+
                             try:
-                                getSrcName = connection.cursor()
+                                name = connection.cursor()
                                 query = "SELECT application_type.Application_name, name_table.IP_address FROM application_type INNER JOIN name_table ON name_table.App_ID = application_type.App_ID WHERE name_table.IP_address = %s";
                                 data = (" " + srcIP,)     
-                                getSrcName.execute(query, data)
-                                result = getSrcName.fetchone()
+                                name.execute(query, data)
+                                result = name.fetchone()
                                 if result is not None:
                                     srcName = result[0]
-                                getSrcName.close()
+                                name.close()
                             except Error as e:
-                                print(e)
+                                 print(e)
 
                             try:
                                 getDstName = connection.cursor()
-                                query2 = "SELECT application_type.Application_name, name_table.IP_address FROM application_type INNER JOIN name_table ON name_table.App_ID = application_type.App_ID WHERE name_table.IP_address = %s";
+                                query2 = "SELECT application_type.Application_name, name_table.IP_address FROM application_type INNER JOIN name_table ON name_table.App_ID = application_type.App_ID WHERE name_table.IP_address = %s"
                                 data2 = (" " + dstIP,)     
                                 getDstName.execute(query2, data2)
                                 result2 = getDstName.fetchone()
@@ -66,5 +67,4 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                 insertFlow.close()
                             except Error as e:
                                 print(e)
-
-
+                          
