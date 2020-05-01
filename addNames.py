@@ -42,9 +42,24 @@ with open("nsOutput.txt", 'r') as file:
                     ipAddressSplit = " " + ipAddressReverse.split(".",4)[3] + "." + ipAddressReverse.split(".",4)[2] + "." + ipAddressReverse.split(".",4)[1] + "." + ipAddressReverse.split(".",4)[0]
                     name = str(line.split("name = ", 1)[-1])
                     try:
+                        try:
+                            AppID = connection.cursor()
+                            query6 = "SELECT * FROM Identify_apps"
+                            AppID.execute(query6)
+                            result6 = AppID.fetchall()
+                            printed = " "
+                            for r in result6:
+                                print(r)
+                                if r[1] in name and printed != "true":
+                                    aID = r[0]
+                                    printed = "true"
+                                elif printed != "true":
+                                    aID = r[0]
+                        except Error as e:
+                            print(e)
                         cursor = connection.cursor()
-                        updateData = ("UPDATE name_table SET NS_name = %s WHERE IP_address = %s")
-                        data = (name.rstrip(), ipAddressSplit)
+                        updateData = ("UPDATE name_table SET NS_name = %s, App_ID = %s WHERE IP_address = %s")
+                        data = (name.rstrip(), aID, ipAddressSplit)
                         cursor.execute(updateData, data)
                         connection.commit()
                         if cursor.rowcount == 0:
@@ -55,6 +70,7 @@ with open("nsOutput.txt", 'r') as file:
                                 result5 = AppID.fetchall()
                                 printed = " "
                                 for r in result5:
+                                    print(r)
                                     if r[1] in name and printed != "true":
                                         aID = r[0]
                                         printed = "true"
@@ -73,5 +89,3 @@ with open("nsOutput.txt", 'r') as file:
                         print(e)
                 except:
                     continue
-                
-                
