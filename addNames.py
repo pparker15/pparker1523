@@ -1,6 +1,27 @@
 import mysql.connector
 from mysql.connector import Error
 connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
+
+# select from identifying table where = users
+getUsers = connection.cursor()
+userQuery = "SELECT application_type.App_ID, application_type.Application_name, Identify_apps.identify_by FROM application_type INNER JOIN Identify_apps on application_type.App_ID = Identify_apps.App_ID WHERE application_type.Category = 'USERS'"
+getUsers.execute(userQuery)
+userResults = getUsers.fetchall()
+
+for user in userResults:
+    with open("sortOutput.txt", 'r') as ipFile:
+        for IPaddr in ipFile:
+            if IPaddr.rstrip() == user[2]:
+                insertUser = connection.cursor()
+                insertQuery = "INSERT INTO name_table (IP_address, AS_name, NS_name, App_ID) VALUES (%s, %s, %s, %s)"
+                data = (" " + IPaddr.rstrip(), user[1], user[1], user[0])
+                print(data)
+                insertUser.execute(insertQuery, data)
+                connection.commit()
+                insertUser.close()
+getUsers.close()
+
+# use AS mapping
 with open("asnOutput.txt", 'r') as file:
     for line in file:
         if "Bulk mode; " not in line:
@@ -33,6 +54,8 @@ with open("asnOutput.txt", 'r') as file:
                     except Error as e:
                         print(e)
 
+
+# use NSlookup
 with open("nsOutput.txt", 'r') as file:
     for line in file:
         if "Authoritative" not in line:
@@ -49,7 +72,6 @@ with open("nsOutput.txt", 'r') as file:
                             result6 = AppID.fetchall()
                             printed = " "
                             for r in result6:
-                                print(r)
                                 if r[1] in name and printed != "true":
                                     aID = r[0]
                                     printed = "true"
@@ -70,7 +92,6 @@ with open("nsOutput.txt", 'r') as file:
                                 result5 = AppID.fetchall()
                                 printed = " "
                                 for r in result5:
-                                    print(r)
                                     if r[1] in name and printed != "true":
                                         aID = r[0]
                                         printed = "true"
