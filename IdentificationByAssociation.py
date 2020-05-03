@@ -87,8 +87,8 @@ for user in userResults:
                     splitTime = times.split("/")
                     if res[1] + "000" >= splitTime[0] and res[1] + "000" <= splitTime[1]:
                         addAssoc = connection.cursor()
-                        assocQuery = "INSERT INTO Associated (Flow_ID, Associated_With) Values (%s, %s) "
-                        data1 = (res[0], app[1])
+                        assocQuery = "INSERT INTO Associated (Flow_ID, Associated_App_ID) Values (%s, %s) "
+                        data1 = (res[0], app[0])
                         addAssoc.execute(assocQuery, data1)
                         connection.commit()
                         addAssoc.close()
@@ -100,4 +100,5 @@ for user in userResults:
         cursor1.close()                     
     except Error as e:
         print(e)
+
 
