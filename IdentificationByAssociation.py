@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, time
 connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
 # need to add differentiation between users
 users = connection.cursor()
-usersQuery = "SELECT application_type.App_ID, application_type.Application_name, Identify_apps.identify_by FROM application_type INNER JOIN Identify_apps on application_type.App_ID = Identify_apps.App_ID WHERE application_type.Category = 'USERS'"
+usersQuery = "SELECT application_type.App_ID, application_type.Application_name, Identify_apps.identify_by, application_type.Category FROM application_type INNER JOIN Identify_apps on application_type.App_ID = Identify_apps.App_ID WHERE application_type.Category = 'USERS'"
 users.execute(usersQuery)
 userResults = users.fetchall()
 for user in userResults:
@@ -92,13 +92,59 @@ for user in userResults:
                         addAssoc.execute(assocQuery, data1)
                         connection.commit()
                         addAssoc.close()
+
+
+                        # insert into stats table
+                        # get current number from the stats table
+                        getStats = connection.cursor()
+                        statQuery = "SELECT * FROM stats_table"
+                        getStats.execute(statQuery)
+                        statResults = getStats.fetchall()
+                        ID = ' '
+                        if "User" in res[2]:
+                            getAppID2 = connection.cursor()
+                            newQuery = "SELECT App_ID FROM application_type WHERE Application_name = %s"
+                            dataAppID = (res[3],)
+                            getAppID2.execute(newQuery, dataAppID)
+                            resultAppID = getAppID2.fetchone()
+                            ID = resultAppID[0]
+                            getAppID2.close()
+                        elif "User" in res[3]:
+                            getAppID2 = connection.cursor()
+                            newQuery = "SELECT App_ID FROM application_type WHERE Application_name = %s"
+                            dataAppID = (res[2],)
+                            getAppID2.execute(newQuery, dataAppID)
+                            resultAppID = getAppID2.fetchone()
+                            ID = resultAppID[0]
+                            getAppID2.close()
+                        # update the current number in the stats table
+                        updateStats = connection.cursor()
+                        if app[2] == "SOCIAL MEDIA":
+                            statQuery = "UPDATE stats_table SET Assoc_Social_Media = Assoc_Social_Media + 1 WHERE App_ID = %s"
+                            dataStats = (ID,)
+                            updateStats.execute(statQuery, dataStats)
+                            connection.commit()
+                        elif app[2] == "NEWS":
+                            statQuery = "UPDATE stats_table SET Assoc_News = Assoc_News + 1 WHERE App_ID = %s"
+                            dataStats = (ID,)
+                            updateStats.execute(statQuery, dataStats)
+                            connection.commit()
+                        elif app[2] == "STREAMING":
+                            statQuery = "UPDATE stats_table SET Assoc_Streaming = Assoc_Streaming + 1 WHERE App_ID = %s"
+                            dataStats = (ID,)
+                            updateStats.execute(statQuery, dataStats)
+                            connection.commit()
+                        updateStats.close() 
                     elif res[1] + "000" == splitTime[1] or res[1] + "000" >= splitTime[1]:
                         comNum = len(StartTimes) - 1
                         if numTime != comNum:
                             numTime += 1
-           
+
+             
         cursor1.close()                     
     except Error as e:
         print(e)
+        
+
 
 
