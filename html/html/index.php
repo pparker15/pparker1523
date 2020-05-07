@@ -10,7 +10,8 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
-		 <title>Graphs</title>
+		<title>Graphs</title>
+		<link rel="stylesheet" type="text/css" href="stylesheet.css">
 		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     		
  		<script type="text/javascript">
@@ -91,6 +92,15 @@
 			 }
     		</script>
 	</head>
+
+	<header>
+		<ul>
+			<li><a href='index.php'>Home Page</a></li>
+      			<li><a href='flows_page.php'>Flows</a></li>
+      			<li><a href='Application_Input.php'>Applications</a></li>
+			<li><a href='User_input.php'>Users</a></li>
+		</ul>
+	</header>
 	<body>
 		 <div class="container-fluid">
 		 <div id="piechart" style="width: 100%; height: 500px;"></div>
