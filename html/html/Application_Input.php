@@ -1,4 +1,3 @@
-
 <?php
 	$DB_SERVER = 'localhost:3306';
 	$DB_USERNAME = 'parker';
@@ -95,7 +94,7 @@
 			</div>
 
 			<div class = "column right">
-				<h2>Application types - Not working</h2>
+				<h2>Application types</h2>
 
 
 				<?php
@@ -169,7 +168,17 @@
 						$time_between = mysqli_real_escape_string($conn, $time_between);
 						$no_required = mysqli_real_escape_string($conn, $no_required);
 
-						$sql = "INSERT INTO application_type (Application_name, Category, time_between_flows, no_required_flows) VALUES ('$app_name', '$Category', '$time_between', '$no_required');";
+						if(empty($time_between) and empty($no_required)){
+							$sql = "INSERT INTO application_type (Application_name, Category) VALUES ('$app_name', '$Category');";
+						}
+						elseif(empty($time_between)){
+							$sql = "INSERT INTO application_type (Application_name, Category, no_required_flows) VALUES ('$app_name', '$Category', '$no_required');";
+						}elseif(empty($no_required)){
+							$sql = "INSERT INTO application_type (Application_name, Category, time_between_flows) VALUES ('$app_name', '$Category', '$time_between');";
+						}else{
+							$sql = "INSERT INTO application_type (Application_name, Category, time_between_flows, no_required_flows) VALUES ('$app_name', '$Category', '$time_between', '$no_required');";
+						}
+						
 						mysqli_query($conn, $sql);
 						echo "App added";
 						echo "<meta http-equiv='refresh' content='0'>";
@@ -213,5 +222,3 @@
 		
 	</body>
 <html>
-
-
