@@ -20,27 +20,23 @@
   $Category = $_POST['newCategory'];
   $time = $_POST['newTime'];
   $number_flows = $_POST['newNumber'];
-  echo "$App_ID";
-  echo "$App_name";
-  echo "$Category";
-  echo "$time";
-  echo "$number_flows";
   if(isset($_POST['delete'])){
     $Result = mysqli_query($conn, "DELETE FROM application_type WHERE App_ID = '$App_ID';");
   }else{
-    if(isset($time) == ''){
-	echo"secondoption";
-	$Result2 = mysqli_query($conn, "UPDATE application_type SET Application_name = '$App_Name', Category='$Category'WHERE App_ID ='$App_ID';");
-    }else{
- 	$Result2 = mysqli_query($conn, "UPDATE application_type SET Application_name = '$App_Name', Category='$Category', time_between_flows = '$time', no_required_flows = '$number_flows' WHERE App_ID ='$App_ID';");
-    }
-
-  }
-
-
-#<meta http-equiv="refresh" content="1; url=Application_Input.php"/>
+	
+  }if(empty($time) and empty($number_flows)){
+		$Result2 = mysqli_query($conn, "UPDATE application_type SET Application_name = '$App_name', Category = '$Category', time_between_flows = null, no_required_flows = null WHERE App_ID = '$App_ID';");
+	}
+	elseif(empty($time)){
+		$Result2 = mysqli_query($conn, "UPDATE application_type SET Application_name = '$App_name', Category = '$Category', time_between_flows = null, no_required_flows = $number_flows WHERE App_ID = '$App_ID';");
+	}elseif(empty($number_flows)){
+		$Result2 = mysqli_query($conn, "UPDATE application_type SET Application_name = '$App_name', Category = '$Category', time_between_flows, no_required_flows = null = '$time' WHERE App_ID = '$App_ID';");
+	}else{
+		$Result2 = mysqli_query($conn, "UPDATE application_type SET Application_name = '$App_name', Category = '$Category', time_between_flows = '$time', no_required_flows = $number_flows WHERE App_ID = '$App_ID';");
+	}
 ?>
-  
+  <meta http-equiv="refresh" content="1; url=Application_Input.php"/>
 </body>
 </html>
+
 
