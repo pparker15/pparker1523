@@ -17,15 +17,35 @@
   $oldIP = $_GET['oldIP'];
   $newIP = $_POST['upIPAddr'];
   $newuname = $_POST['uname'];
+  #if(!preg_match("/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/", $newIP)){
+  #    echo "Ensure IP address is entered";
+  #}else{
+
+  #}
+  
+  
 
   if(isset($_POST['delete'])){
-    $Result = mysqli_query($conn, "DELETE FROM Users WHERE User_IP_addr = '$oldIP';");
+    if(!mysqli_query($conn, "DELETE FROM Users WHERE User_IP_addr = '$oldIP';")){
+	echo "There was an error. Please try again.";
+    }else{
+ 	echo "<meta http-equiv='refresh' content='1; url=User_input.php'/>";
+    }
   }else{
-    $Result2 = mysqli_query($conn, "UPDATE Users SET User_IP_addr ='$newIP', User_Name = '$newuname' WHERE User_IP_addr ='$oldIP';");
+    if(!preg_match("/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/", $newIP)){
+      echo "Ensure IP address is entered";
+    }else{
+	if(!mysqli_query($conn, "UPDATE Users SET User_IP_addr ='$newIP', User_Name = '$newuname' WHERE User_IP_addr ='$oldIP';")){
+   	   echo "There was an error. Please try again.";
+        }else{
+ 	   echo "<meta http-equiv='refresh' content='1; url=User_input.php'/>";
+        }
+    }
+    
   }
 
 ?>
-  <meta http-equiv="refresh" content="1; url=User_input.php"/>
+  
 </body>
 </html>
 
