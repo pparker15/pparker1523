@@ -17,11 +17,9 @@ make install
 cd /usr/local/lib
 ldconfig -v
 
-#install mongo database
-
-apt install mongodb-clients -y
+#install python module
 apt install python3-pip -y
-pip3 install pymongo
+pip3 install mysql-connector
 
 #install whois
 apt install whois
