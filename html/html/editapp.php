@@ -13,30 +13,39 @@
   <title></title>
 </head>
 <body>
-
 <?php
-  $App_ID = $_GET['appID'];
-  $App_name = $_POST['newAppName'];
-  $Category = $_POST['newCategory'];
-  $time = $_POST['newTime'];
-  $number_flows = $_POST['newNumber'];
+  $oldIP = $_GET['oldIP'];
+  $newIP = $_POST['upIPAddr'];
+  $newuname = $_POST['uname'];
+  #if(!preg_match("/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/", $newIP)){
+  #    echo "Ensure IP address is entered";
+  #}else{
+
+  #}
+  
+  
+
   if(isset($_POST['delete'])){
-    $Result = mysqli_query($conn, "DELETE FROM application_type WHERE App_ID = '$App_ID';");
+    if(!mysqli_query($conn, "DELETE FROM Users WHERE User_IP_addr = '$oldIP';")){
+	echo "There was an error. Please try again.";
+    }else{
+ 	echo "<meta http-equiv='refresh' content='1; url=User_input.php'/>";
+    }
   }else{
-	
-  }if(empty($time) and empty($number_flows)){
-		$Result2 = mysqli_query($conn, "UPDATE application_type SET Application_name = '$App_name', Category = '$Category', time_between_flows = null, no_required_flows = null WHERE App_ID = '$App_ID';");
-	}
-	elseif(empty($time)){
-		$Result2 = mysqli_query($conn, "UPDATE application_type SET Application_name = '$App_name', Category = '$Category', time_between_flows = null, no_required_flows = $number_flows WHERE App_ID = '$App_ID';");
-	}elseif(empty($number_flows)){
-		$Result2 = mysqli_query($conn, "UPDATE application_type SET Application_name = '$App_name', Category = '$Category', time_between_flows, no_required_flows = null = '$time' WHERE App_ID = '$App_ID';");
-	}else{
-		$Result2 = mysqli_query($conn, "UPDATE application_type SET Application_name = '$App_name', Category = '$Category', time_between_flows = '$time', no_required_flows = $number_flows WHERE App_ID = '$App_ID';");
-	}
+    if(!preg_match("/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/", $newIP)){
+      echo "Ensure IP address is entered";
+    }else{
+	if(!mysqli_query($conn, "UPDATE Users SET User_IP_addr ='$newIP', User_Name = '$newuname' WHERE User_IP_addr ='$oldIP';")){
+   	   echo "There was an error. Please try again.";
+        }else{
+ 	   echo "<meta http-equiv='refresh' content='1; url=User_input.php'/>";
+        }
+    }
+    
+  }
+
 ?>
-  <meta http-equiv="refresh" content="1; url=Application_Input.php"/>
+  
 </body>
 </html>
-
 
