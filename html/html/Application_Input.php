@@ -1,3 +1,4 @@
+
 <?php
 	$DB_SERVER = 'localhost:3306';
 	$DB_USERNAME = 'parker';
@@ -51,11 +52,13 @@
 							echo "<form method='POST' action='editidentify.php?appID=$ID_App&identify=$identify_by'>
 							      <tr>
 							      <td><input type='text' value ='{$ID_App}' name='appID'></td>
-							      <td><input type='text' value='{$identify_by}' name='new_Identify_By'></td>
-							      <td><input type='submit' value='Update' name='update'>
-							      <input type='submit' value='Delete' name='delete'></td>
+							      <td><input type='text' value='{$identify_by}' name='new_Identify_By'></td>"
+				?>
+							      <td><input type='submit' value='Update' name='update' onclick="return confirm('Are you sure you want to update record?');">
+							      <input type='submit' value='Delete' name='delete' onclick="return confirm('Are you sure you want to delete record?');"></td>
 							      </tr>
-							     </form>";
+							     </form>
+				<?php
 			    				
 							}
 							echo "</table>";
@@ -69,7 +72,7 @@
 				<div class="INSERT">
 					<form method = "POST" action = "Application_Input.php" enctype="multipart/form-data">
 						<label for="AppID">Application ID</label>	
-						<input type = "text" name = "AppID" placeholder = "Application ID" required>
+						<input type = "number" name = "AppID" placeholder = "Application ID" required>
 						<br>
 						<label for="identifier">Identifer</label>
 						<input type = "text" name = "identifier" placeholder = "Identifier" required>
@@ -85,9 +88,13 @@
 						$identifier = mysqli_real_escape_string($conn, $identifier);
 
 						$sql1 = "INSERT INTO Identify_apps (App_ID, identify_by) VALUES ('$appID', '$identifier');";
-						mysqli_query($conn, $sql1);
-						echo "Identifier added";
-						echo "<meta http-equiv='refresh' content='0'>";
+
+						if(!mysqli_query($conn, $sql1)){
+							echo "There was an error. Please ensure the ID is in the application table";
+						}else{
+							echo "Identifier added";
+							echo "<meta http-equiv='refresh' content='0'>";
+						}
 					} 
 
 				?>
@@ -122,11 +129,13 @@
 							      <td><input type='text' value ='{$App_name}' name='newAppName'></td>
 							      <td><input type='text' value='{$Category}' name='newCategory'></td>
 							      <td><input type='text' value='{$time}' name='newTime'></td>
-							      <td><input type='number' value='{$number_flows}' name='newNumber'></td>
-							      <td><input type='submit' value='Update' name='update'>
-							      <input type='submit' value='Delete' name='delete'></td>
+							      <td><input type='number' value='{$number_flows}' name='newNumber'></td>"
+				?>
+							      <td><input type='submit' value='Update' name='update' onclick="return confirm('Are you sure you want to update the record?');">
+							      <input type='submit' value='Delete' name='delete' onclick="return confirm('Are you sure you want to delete the record?');"></td>
 							     </tr>
-							     </form>";
+							     </form>
+				<?php
 			    	
 						}
 						echo "</table>";
@@ -179,9 +188,13 @@
 							$sql = "INSERT INTO application_type (Application_name, Category, time_between_flows, no_required_flows) VALUES ('$app_name', '$Category', '$time_between', '$no_required');";
 						}
 						
-						mysqli_query($conn, $sql);
-						echo "App added";
-						echo "<meta http-equiv='refresh' content='0'>";
+						if(!mysqli_query($conn, $sql)){
+							echo "There was an error. Please try again";
+						}else{
+							echo "App added";
+							echo "<meta http-equiv='refresh' content='0'>";
+						}
+						
 					} 
 
 				?>
@@ -222,3 +235,5 @@
 		
 	</body>
 <html>
+
+
