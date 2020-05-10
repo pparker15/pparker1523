@@ -47,12 +47,9 @@ CREATE TABLE `Flows` (
   `Flow_Date_Time` varchar(45) DEFAULT NULL,
   `Source_Name` varchar(45) DEFAULT NULL,
   `Destination_Name` varchar(45) DEFAULT NULL,
-  `Assoc_1` varchar(45) DEFAULT NULL,
-  `Assoc_2` varchar(45) DEFAULT NULL,
-  `Assoc_3` varchar(45) DEFAULT NULL,
   `Flow_Category` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`Flow_ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=1544578 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2823997 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -118,6 +115,7 @@ BEGIN
 	INSERT INTO application_type (application_name, Category) VALUES (new.User_Name, 'USERS');
     SELECT App_ID INTO ID FROM application_type WHERE application_name = new.User_Name;
     INSERT INTO Identify_apps (App_ID, identify_by) VALUES (ID, new.User_IP_Addr);
+    INSERT INTO Identify_apps (App_ID, identify_by) VALUES (ID, new.User_Name);
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -140,7 +138,7 @@ CREATE TABLE `application_type` (
   `time_between_flows` varchar(45) DEFAULT NULL,
   `no_required_flows` int(11) DEFAULT NULL,
   PRIMARY KEY (`App_ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=123456823 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=123456822 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -241,4 +239,4 @@ CREATE TABLE `stats_table` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-05-09 12:59:49
+-- Dump completed on 2020-05-10 13:36:53
