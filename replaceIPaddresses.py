@@ -66,13 +66,11 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                 category = "UNKNOWN"
                             elif (dresult[0] == "USERS" or dresult[0] == "NETWORK") and (result[0] == "USERS" or result[0] == "NETWORK"):
                                 category = "NETWORK"
-                                print(category)
                             elif(dresult[0] == "USERS" or dresult[0] == "NETWORK") and (result[0] != "USERS" or result[0] != "NETWORK"):
                                 category = result[0]
-                                print(category)
                             elif(dresult[0] != "USERS" or dresult[0] != "NETWORK") and (result[0] == "USERS" or result[0] == "NETWORK"):
                                 category = dresult[0]
-                                print(category)
+                                
 
                 # output to database - need to still output nslookup or as name
                             try:
@@ -88,14 +86,10 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                     data3 = (extractedLine[0] + " " + extractedLine[1], "NA", "NA", category)
                                         
                                 insertFlow.execute(query3, data3)
-                                print(data3)
                                 srcName = " "
                                 dstName = " "
                                 connection.commit()
                                 insertFlow.close()
                             except Error as e:
                                 print(e)
-                            
 
-
-                          
