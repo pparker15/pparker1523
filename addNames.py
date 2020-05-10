@@ -28,26 +28,11 @@ with open("asnOutput.txt", 'r') as file:
             if "Error: " not in line:
                 if "AS" not in line:
                     try:
-                        aID = " "
+                        #aID = " "
                         asnLine = line.split('|')
-                        try:
-                            AppID = connection.cursor()
-                            query4 = "SELECT * FROM Identify_apps"
-                            AppID.execute(query4)
-                            result4 = AppID.fetchall()
-                            printed = " "
-                            for r in result4:
-                                if r[1] in asnLine[2] and printed != "true":
-                                    aID = r[0]
-                                    printed = "true"
-                                elif printed != "true":
-                                    aID = r[0]
-                                
-                        except Error as e:
-                            print(e)
                         cursor = connection.cursor()
-                        insertData = ("INSERT INTO name_table (IP_address, AS_name, NS_name, App_ID) VALUES (%s, %s, 'NA', %s)")
-                        data = (asnLine[1], asnLine[2], aID)
+                        insertData = ("INSERT INTO name_table (IP_address, AS_name, NS_name) VALUES (%s, %s, 'NA')")
+                        data = (asnLine[1], asnLine[2])
                         cursor.execute(insertData, data)
                         cursor.close()
                         connection.commit()
@@ -65,44 +50,15 @@ with open("nsOutput.txt", 'r') as file:
                     ipAddressSplit = " " + ipAddressReverse.split(".",4)[3] + "." + ipAddressReverse.split(".",4)[2] + "." + ipAddressReverse.split(".",4)[1] + "." + ipAddressReverse.split(".",4)[0]
                     name = str(line.split("name = ", 1)[-1])
                     try:
-                        try:
-                            AppID = connection.cursor()
-                            query6 = "SELECT * FROM Identify_apps"
-                            AppID.execute(query6)
-                            result6 = AppID.fetchall()
-                            printed = " "
-                            for r in result6:
-                                if r[1] in name and printed != "true":
-                                    aID = r[0]
-                                    printed = "true"
-                                elif printed != "true":
-                                    aID = r[0]
-                        except Error as e:
-                            print(e)
                         cursor = connection.cursor()
-                        updateData = ("UPDATE name_table SET NS_name = %s, App_ID = %s WHERE IP_address = %s")
-                        data = (name.rstrip(), aID, ipAddressSplit)
+                        updateData = ("UPDATE name_table SET NS_name = %s WHERE IP_address = %s")
+                        data = (name.rstrip(), ipAddressSplit)
                         cursor.execute(updateData, data)
                         connection.commit()
                         if cursor.rowcount == 0:
-                            try:
-                                AppID = connection.cursor()
-                                query5 = "SELECT * FROM Identify_apps"
-                                AppID.execute(query5)
-                                result5 = AppID.fetchall()
-                                printed = " "
-                                for r in result5:
-                                    if r[1] in name and printed != "true":
-                                        aID = r[0]
-                                        printed = "true"
-                                    elif printed != "true":
-                                        aID = r[0]
-                                
-                            except Error as e:
-                                print(e)
                             cursor2 = connection.cursor()
-                            insertData = ("INSERT INTO name_table (IP_address, AS_name, NS_name, App_ID) VALUES (%s, 'NA', %s, %s)")
-                            data = (ipAddressSplit, name, aID)
+                            insertData = ("INSERT INTO name_table (IP_address, AS_name, NS_name) VALUES (%s, 'NA', %s)")
+                            data = (ipAddressSplit, name)
                             cursor2.execute(insertData, data)
                             cursor2.close()
                         cursor.close()
@@ -110,3 +66,39 @@ with open("nsOutput.txt", 'r') as file:
                         print(e)
                 except:
                     continue
+
+# Change categorisation - it doesn't work properly - so instead of doing it throughout just loop through the name table and do it at the end
+try:
+    getNames = connection.cursor()
+    nameQuery = ("SELECT * FROM name_table")
+    getNames.execute(nameQuery)
+    nameResult = getNames.fetchall()
+    for n in nameResult:
+        aID = " "
+        AppID = connection.cursor()
+        query4 = ("SELECT * FROM Identify_apps")
+        AppID.execute(query4)
+        result4 = AppID.fetchall()
+        printed = " "
+        for r in result4:
+            if r[1] in n[1] and printed != "true":
+                aID = r[0]
+                printed = "true"
+            elif r[1] in n[2] and printed != "true":
+                aID = r[0]
+                printed = "true"
+            elif printed != "true":
+                aID = 123456789
+        try:
+            updateNames = connection.cursor()
+            updateNameQuery = ("UPDATE name_table SET App_ID = %s WHERE IP_address = %s")
+            dataAppID = (aID, n[0])
+            updateNames.execute(updateNameQuery, dataAppID)
+            connection.commit()
+            updateNames.close()
+            AppID.close()
+        except Error as e:
+            print(e)
+    getNames.close()
+except Error as e:
+    print(e)
