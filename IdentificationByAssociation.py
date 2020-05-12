@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, time
 connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
 # need to add differentiation between users
 users = connection.cursor()
-usersQuery = "SELECT application_type.App_ID, application_type.Application_name, Identify_apps.identify_by, application_type.Category FROM application_type INNER JOIN Identify_apps on application_type.App_ID = Identify_apps.App_ID WHERE application_type.Category = 'USERS'"
+usersQuery = "SELECT DISTINCT application_type.App_ID, application_type.Application_name, application_type.Category FROM application_type INNER JOIN Identify_apps on application_type.App_ID = Identify_apps.App_ID WHERE application_type.Category = 'USERS'"
 users.execute(usersQuery)
 userResults = users.fetchall()
 for user in userResults:
@@ -76,8 +76,7 @@ for user in userResults:
             #output to the database      
             
             getFlows = connection.cursor()
-            #flowQuery = "SELECT * FROM Flows WHERE Flow_Category = 'CDN'"
-            flowQuery = "SELECT * FROM Flows WHERE (Source_name = %s or Destination_name = %s) AND Flow_Category = 'CDN'";
+            flowQuery = "SELECT * FROM Flows WHERE (Source_name = %s or Destination_name = %s) AND (Flow_Category = 'CDN' or Flow_Category = 'UNKNOWN')"
             data = (user[1], user[1])
             getFlows.execute(flowQuery, data)
             result = getFlows.fetchall()
@@ -86,12 +85,15 @@ for user in userResults:
                     times = StartTimes[numTime]
                     splitTime = times.split("/")
                     if res[1] + "000" >= splitTime[0] and res[1] + "000" <= splitTime[1]:
-                        addAssoc = connection.cursor()
-                        assocQuery = "INSERT INTO Associated (Flow_ID, Associated_App_ID) Values (%s, %s) "
-                        data1 = (res[0], app[0])
-                        addAssoc.execute(assocQuery, data1)
-                        connection.commit()
-                        addAssoc.close()
+                        try:
+                            addAssoc = connection.cursor()
+                            assocQuery = "INSERT INTO Associated (Flow_ID, Associated_App_ID) Values (%s, %s)"
+                            data1 = (res[0], app[0])
+                            addAssoc.execute(assocQuery, data1)
+                            connection.commit()
+                            addAssoc.close()
+                        except Error as e:
+                            print(e)
 
 
                         # insert into stats table
@@ -134,6 +136,17 @@ for user in userResults:
                             dataStats = (ID,)
                             updateStats.execute(statQuery, dataStats)
                             connection.commit()
+                        elif app[2] == "EDUCATION":
+                            statQuery = "UPDATE stats_table SET Assoc_Education = Assoc_Education + 1 WHERE App_ID = %s"
+                            dataStats = (ID,)
+                            updateStats.execute(statQuery, dataStats)
+                            connection.commit()
+                        elif app[2] == "SHOPPING":
+                            statQuery = "UPDATE stats_table SET Assoc_Shopping = Assoc_Shopping + 1 WHERE App_ID = %s"
+                            dataStats = (ID,)
+                            updateStats.execute(statQuery, dataStats)
+                            connection.commit()
+                    
                         updateStats.close() 
                     elif res[1] + "000" == splitTime[1] or res[1] + "000" >= splitTime[1]:
                         comNum = len(StartTimes) - 1
@@ -144,7 +157,3 @@ for user in userResults:
         cursor1.close()                     
     except Error as e:
         print(e)
-        
-
-
-
