@@ -1,6 +1,7 @@
 import mysql.connector
 from mysql.connector import Error
-connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
+connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='application_identification')
+
 with open("nfDumpOutput.txt", 'r') as captureFile:
     for captureLine in captureFile:
         if "Date" not in captureLine:
@@ -18,7 +19,7 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                 #check the database to see if there is a match
                                 checkMatch1 = connection.cursor()
                                 query = "SELECT IP_address FROM name_table WHERE IP_address = %s"
-                                # add was added because it wouldn't work without it. Think its the comma for some reason.
+                                # addr was added because it wouldn't work without it.
                                 addr = (" " + srcIP,)
                                 checkMatch1.execute(query, addr)
                                 result = checkMatch1.fetchone()
@@ -43,4 +44,3 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                 checkMatch2.close()
                             except Error as e: 
                                 print(e)
-
