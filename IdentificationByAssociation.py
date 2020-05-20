@@ -1,17 +1,18 @@
 import mysql.connector
 from mysql.connector import Error
 from datetime import datetime, timedelta, time
+connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='application_identification')
 
-connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
-# need to add differentiation between users
+# Loop through the users to ensure association is kept separate for each user.
 users = connection.cursor()
 usersQuery = "SELECT DISTINCT application_type.App_ID, application_type.Application_name, application_type.Category FROM application_type INNER JOIN Identify_apps on application_type.App_ID = Identify_apps.App_ID WHERE application_type.Category = 'USERS'"
 users.execute(usersQuery)
 userResults = users.fetchall()
 for user in userResults:
     try:
+        # Retrieve the applications that can be identified by association
         cursor1 = connection.cursor()
-        query = "SELECT * FROM user_profiling.application_type WHERE time_between_flows is not null and no_required_flows is not null"
+        query = "SELECT * FROM application_type WHERE time_between_flows is not null and no_required_flows is not null"
         cursor1.execute(query)
         results = cursor1.fetchall()
         for app in results:
@@ -28,17 +29,17 @@ for user in userResults:
             secondNum = 0
             rowSplit = app[4].split(" ")
             Time = []
-            
+
+            # Retrieve the times of all the flows for the user and application
             qApp = connection.cursor()
-            #query1 = "SELECT * FROM user_profiling.Flows WHERE Source_name = %s or Destination_name = %s"
-            query1 = "SELECT * FROM user_profiling.Flows WHERE Source_Name = %s AND Destination_Name = %s or Destination_Name = %s AND Source_Name = %s";
+            query1 = "SELECT * FROM Flows WHERE Source_Name = %s AND Destination_Name = %s or Destination_Name = %s AND Source_Name = %s";
             data = (user[1], app[1], user[1], app[1])
             qApp.execute(query1, data)
             result = qApp.fetchall()
             for r in result:
                 Time.append(datetime.strptime(r[1], '%Y-%m-%d %H:%M:%S.%f'))
             qApp.close()
-            
+            # Check the flow is within the time limit
             for t in Time:
                 if previous != " ":
                     # keyword cannot be an expression error
@@ -65,6 +66,7 @@ for user in userResults:
                     newTimesList[secondNum].append(t)
 
             num = -1
+            # if the number of flows is greater or equal to the number of required flows, its a new instance of an application so get the first and last flow times.
             for element in newTimesList:
                 length = len(element) - 1
                 num += 1
@@ -74,7 +76,7 @@ for user in userResults:
                     StartTimes.append((str(startTime) + "/" + str(endTime)))
 
             #output to the database      
-            
+            # Get all the flows for that user between the start and end times that have the category of CDN or unknown
             getFlows = connection.cursor()
             flowQuery = "SELECT * FROM Flows WHERE (Source_name = %s or Destination_name = %s) AND (Flow_Category = 'CDN' or Flow_Category = 'UNKNOWN')"
             data = (user[1], user[1])
@@ -136,18 +138,9 @@ for user in userResults:
                             dataStats = (ID,)
                             updateStats.execute(statQuery, dataStats)
                             connection.commit()
-                        elif app[2] == "EDUCATION":
-                            statQuery = "UPDATE stats_table SET Assoc_Education = Assoc_Education + 1 WHERE App_ID = %s"
-                            dataStats = (ID,)
-                            updateStats.execute(statQuery, dataStats)
-                            connection.commit()
-                        elif app[2] == "SHOPPING":
-                            statQuery = "UPDATE stats_table SET Assoc_Shopping = Assoc_Shopping + 1 WHERE App_ID = %s"
-                            dataStats = (ID,)
-                            updateStats.execute(statQuery, dataStats)
-                            connection.commit()
                     
-                        updateStats.close() 
+                        updateStats.close()
+                    # ensure each application instance is associated.
                     elif res[1] + "000" == splitTime[1] or res[1] + "000" >= splitTime[1]:
                         comNum = len(StartTimes) - 1
                         if numTime != comNum:
