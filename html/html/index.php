@@ -110,13 +110,12 @@
 
 		
 	</head>
-
+	<!--Navigation Bar-->
 	<header>
 		<ul>
 			<li><a href='index.php'>Home Page</a></li>
       			<li><a href='flows_page.php'>Flows</a></li>
       			<li><a href='Application_Input.php'>Applications</a></li>
-			<li><a href='User_input.php'>Users</a></li>
 		</ul>
 	</header>
 	<body>
