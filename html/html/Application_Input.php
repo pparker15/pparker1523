@@ -1,10 +1,11 @@
 
 <?php
+	# Database connection
 	$DB_SERVER = 'localhost:3306';
 	$DB_USERNAME = 'parker';
 	$DB_PASSWORD = 'password';
-	$DB_DATABASE = 'user_profiling';
-	
+	$DB_DATABASE = 'application_identification';
+
 	$conn = mysqli_connect($DB_SERVER, $DB_USERNAME, $DB_PASSWORD, $DB_DATABASE);
 ?>
 
@@ -14,20 +15,24 @@
 		 <title>Applications</title>
 		 <link rel="stylesheet" type="text/css" href="stylesheet.css">
 	</head>
-
+	<!--Navigation Bar-->
 	<header>
 		<ul>
 			<li><a href='index.php'>Home Page</a></li>
       			<li><a href='flows_page.php'>Flows</a></li>
       			<li><a href='Application_Input.php'>Applications</a></li>
-			<li><a href='User_input.php'>Users</a></li>
 		</ul>
 	</header>
 
 	<body>
 		<h1>Applications</h1>
 		<h2>Important Information</h1>
-		<p>Use the name table at the bottom of the page to learn about the applications that can be identified. To be able to recognise applications in flow, insert a new application name into the applications table. Then insert ways of identifying this application in the identify apps table by adding text from the name table. The flows table is not affected after changing information on this page.</p>
+		<p>Use the name table at the bottom of the page to learn about the applications that can be identified.</p>
+
+		<p> To be able to recognise applications in flow, insert a new application name into the applications table. Then insert ways of identifying this application in the identify apps table by adding text from the name table. 
+		<p>*NOTE* The flows table is not affected after changing information on this page.</p>
+		<p>*NOTE* Ensure an application has not been used before deleting it. </p>
+
 
 			
 
@@ -35,8 +40,7 @@
 			<div class = "column left">
 				<h2>How to identify applications</h2>
 				<?php
-				# Identify by display and input
-					#Identify_apps, App_ID, identify_by;
+				# Display Identify_by table
 					$appSelect = mysqli_query($conn, "SELECT*FROM Identify_apps;");
 						
 						if(mysqli_num_rows($appSelect) > 0){
@@ -67,7 +71,7 @@
 						echo "No results found";
 					}
 				?>
-
+				<!--Input a new identifier-->
 				<h3>Add new way to identify applications<h3>
 				<div class="INSERT">
 					<form method = "POST" action = "Application_Input.php" enctype="multipart/form-data">
@@ -105,7 +109,7 @@
 
 
 				<?php
-				# Display and input application types
+				# Display application types
 					$appSelect = mysqli_query($conn, "SELECT*FROM application_type;");
 						if(mysqli_num_rows($appSelect) > 0){
 							echo " <table>
@@ -145,7 +149,7 @@
 					}
 				?>
 
-			
+				<!--Add a new application-->
 				<h3>Add an application</h3>
 				<div class="INSERT">
 					<form method = "POST" action = "Application_Input.php" enctype="multipart/form-data">
@@ -177,6 +181,7 @@
 						$time_between = mysqli_real_escape_string($conn, $time_between);
 						$no_required = mysqli_real_escape_string($conn, $no_required);
 
+						# Check if fields have been filled.
 						if(empty($time_between) and empty($no_required)){
 							$sql = "INSERT INTO application_type (Application_name, Category) VALUES ('$app_name', '$Category');";
 						}
@@ -201,6 +206,7 @@
 			</div>
 		</div>
 
+		<!--Display the name table-->
 		<div class = "row">
 			<h2>Names table</h2>
 			<table class="display">
