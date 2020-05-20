@@ -3,7 +3,7 @@ Project Supervisor - Bogdan Ghita
 
 The aim of the project is to identify the applications being used on the network by each user. This is completed using nslookup, an AS mapping tool and by assocation (CDN and unknown flows).
 
-Pre-resiquites
+Prerequisites
   A MySQL server
   Apache with PHP
   Ubuntu OS
