@@ -1,8 +1,25 @@
 # pparker1523
-
-The aim of the project is to identify the applications that are used on the network and to identify whether there are variations in the   applications used by each user. This will look at day to day variations as well as differences after a longer time period, for example     after 2 months. In order to complete this, nslookup will be used to identify the domain names associated with some of the IP addresses     in the data set and will help to identify applications being used. These applications can then be classified and analysed.
-
-
 Project Supervisor - Bogdan Ghita
+
+The aim of the project is to identify the applications being used on the network by each user. This is completed using nslookup, an AS mapping tool and by assocation (CDN and unknown flows).
+
+Pre-resiquites
+  A MySQL server
+  Apache with PHP
+  Ubuntu OS
+
+How to use?
+  To recreate the database, use the command 'source > database.sql'. Check that the triggers were created.
+  To install dependencies, run ConfigUbuntu.sh, but ensure to run apt get update and apt get upgrade first.
+  
+  Within the scripts folder, create a folder called 'data' and within the data folder, create a new folder called 'processed'. 
+  Put the pcap files in the data folder.
+  Check the paths within the 'ProcessData.sh' match where it is installed.
+  Update the scripts with MySQL login information.
+  
+  Put the html folder in the '/var/www' folder.
+  
+  Execute 'ProcessData.sh' to identify the applications by association.
+
 
 creative commons license
