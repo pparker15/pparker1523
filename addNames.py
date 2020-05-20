@@ -1,8 +1,8 @@
 import mysql.connector
 from mysql.connector import Error
-connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
+connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='application_identification')
 
-# select from identifying table where = users
+# Add users to the name_table
 getUsers = connection.cursor()
 userQuery = "SELECT application_type.App_ID, application_type.Application_name, Identify_apps.identify_by FROM application_type INNER JOIN Identify_apps on application_type.App_ID = Identify_apps.App_ID WHERE application_type.Category = 'USERS'"
 getUsers.execute(userQuery)
@@ -28,7 +28,6 @@ with open("asnOutput.txt", 'r') as file:
             if "Error: " not in line:
                 if "AS" not in line:
                     try:
-                        #aID = " "
                         asnLine = line.split('|')
                         cursor = connection.cursor()
                         insertData = ("INSERT INTO name_table (IP_address, AS_name, NS_name) VALUES (%s, %s, 'NA')")
@@ -67,7 +66,7 @@ with open("nsOutput.txt", 'r') as file:
                 except:
                     continue
 
-# Change categorisation - it doesn't work properly - so instead of doing it throughout just loop through the name table and do it at the end
+# Set the application ID for each IP address
 try:
     getNames = connection.cursor()
     nameQuery = ("SELECT * FROM name_table")
@@ -88,7 +87,7 @@ try:
                 aID = r[0]
                 printed = "true"
             elif printed != "true":
-                aID = 123456789
+                aID = 1
         try:
             updateNames = connection.cursor()
             updateNameQuery = ("UPDATE name_table SET App_ID = %s WHERE IP_address = %s")
