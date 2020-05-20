@@ -1,7 +1,7 @@
 # database connection
 import mysql.connector
 from mysql.connector import Error
-connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
+connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='application_identification')
 
 srcName = " "
 dstName = " "
@@ -22,7 +22,6 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                             except:
                                 continue
                 # Get source and destination name from the database
-
                             try:
                                 name = connection.cursor()
                                 query = "SELECT application_type.Application_name, name_table.IP_address FROM application_type INNER JOIN name_table ON name_table.App_ID = application_type.App_ID WHERE name_table.IP_address = %s";
@@ -48,8 +47,8 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                 print(e)
 
                 # Categorise the flow
-                            # check the category of the source and destination
-                            # the one that isn't USERS or NETWORK is to be used
+                # check the category of the source and destination
+                # the one that isn't USERS or NETWORK is to be used
 
                             srcCat = connection.cursor()
                             srcQuery = "SELECT Category FROM application_type WHERE application_name = %s"
@@ -72,18 +71,18 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                 category = dresult[0]
                                 
 
-                # output to database - need to still output nslookup or as name
+                # output to database - if still need to output nslookup or as name
                             try:
                                 insertFlow = connection.cursor()
                                 query3 = "INSERT INTO Flows (FLow_Date_Time, Source_Name, Destination_Name, Flow_Category) VALUES (%s, %s, %s, %s)"
                                 if srcName != " " and dstName != " ":
                                     data3 = (extractedLine[0] + " " + extractedLine[1], srcName, dstName, category)
                                 elif srcName != " " and dstName == " ":
-                                    data3 = (extractedLine[0] + " " + extractedLine[1], srcName, "NA", category)
+                                    data3 = (extractedLine[0] + " " + extractedLine[1], srcName, "Unknown", category)
                                 elif srcName == " " and dstName != " ":
-                                    data3 = (extractedLine[0] + " " + extractedLine[1], "NA", dstName, category)
+                                    data3 = (extractedLine[0] + " " + extractedLine[1], "Unknown", dstName, category)
                                 else:
-                                    data3 = (extractedLine[0] + " " + extractedLine[1], "NA", "NA", category)
+                                    data3 = (extractedLine[0] + " " + extractedLine[1], "Unknown", "Unknown", category)
                                         
                                 insertFlow.execute(query3, data3)
                                 srcName = " "
@@ -92,4 +91,3 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                 insertFlow.close()
                             except Error as e:
                                 print(e)
-
