@@ -1,7 +1,8 @@
 # database connection
 import mysql.connector
 from mysql.connector import Error
-connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='application_identification')
+
+connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
 
 srcName = " "
 dstName = " "
@@ -23,8 +24,9 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                 continue
                 # Get source and destination name from the database
                             try:
-                                name = connection.cursor()
-                                query = "SELECT application_type.Application_name, name_table.IP_address FROM application_type INNER JOIN name_table ON name_table.App_ID = application_type.App_ID WHERE name_table.IP_address = %s";
+                                name = connection.cursor(buffered=True)
+                                #query = "SELECT application_type.Application_name, name_table.IP_address FROM application_type INNER JOIN name_table ON name_table.App_ID = application_type.App_ID WHERE name_table.IP_address = %s";
+                                query = "SELECT name_ID FROM name_table WHERE IP_address = %s"
                                 data = (" " + srcIP,)     
                                 name.execute(query, data)
                                 result = name.fetchone()
@@ -35,8 +37,9 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                  print(e)
 
                             try:
-                                getDstName = connection.cursor()
-                                query2 = "SELECT application_type.Application_name, name_table.IP_address FROM application_type INNER JOIN name_table ON name_table.App_ID = application_type.App_ID WHERE name_table.IP_address = %s"
+                                getDstName = connection.cursor(buffered=True)
+                                #query2 = "SELECT application_type.Application_name, name_table.IP_address FROM application_type INNER JOIN name_table ON name_table.App_ID = application_type.App_ID WHERE name_table.IP_address = %s"
+                                query2 = "SELECT name_ID FROM name_table WHERE IP_address = %s"
                                 data2 = (" " + dstIP,)     
                                 getDstName.execute(query2, data2)
                                 result2 = getDstName.fetchone()
@@ -46,18 +49,20 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                             except Error as e:
                                 print(e)
 
+                            
                 # Categorise the flow
                 # check the category of the source and destination
                 # the one that isn't USERS or NETWORK is to be used
 
                             srcCat = connection.cursor()
-                            srcQuery = "SELECT Category FROM application_type WHERE application_name = %s"
+                            #srcQuery = "SELECT Category FROM application_type WHERE application_name = %s"
+                            srcQuery = "SELECT application_type.Category FROM name_table INNER JOIN application_type on application_type.App_ID = name_table.App_ID WHERE name_table.name_id = %s"
                             data = (srcName,)
                             srcCat.execute(srcQuery, data)
                             result = srcCat.fetchone()
-
                             dstCat = connection.cursor()
-                            dstQuery = "SELECT Category FROM application_type WHERE application_name = %s"
+                            #dstQuery = "SELECT Category FROM application_type WHERE application_name = %s"
+                            dstQuery = "SELECT application_type.Category FROM name_table INNER JOIN application_type on application_type.App_ID = name_table.App_ID WHERE name_table.name_id = %s"
                             ddata = (dstName,)
                             dstCat.execute(dstQuery, ddata)
                             dresult = dstCat.fetchone()
@@ -72,17 +77,21 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                 
 
                 # output to database - if still need to output nslookup or as name
+                            
+                
                             try:
+
+                                
                                 insertFlow = connection.cursor()
-                                query3 = "INSERT INTO Flows (FLow_Date_Time, Source_Name, Destination_Name, Flow_Category) VALUES (%s, %s, %s, %s)"
+                                query3 = "INSERT INTO Flows (FLow_Date_Time, Source_Name_ID, Destination_Name_ID, Flow_Category) VALUES (%s, %s, %s, %s)"
                                 if srcName != " " and dstName != " ":
                                     data3 = (extractedLine[0] + " " + extractedLine[1], srcName, dstName, category)
                                 elif srcName != " " and dstName == " ":
-                                    data3 = (extractedLine[0] + " " + extractedLine[1], srcName, "Unknown", category)
+                                    data3 = (extractedLine[0] + " " + extractedLine[1], srcName, "1", category)
                                 elif srcName == " " and dstName != " ":
-                                    data3 = (extractedLine[0] + " " + extractedLine[1], "Unknown", dstName, category)
+                                    data3 = (extractedLine[0] + " " + extractedLine[1], "1", dstName, category)
                                 else:
-                                    data3 = (extractedLine[0] + " " + extractedLine[1], "Unknown", "Unknown", category)
+                                    data3 = (extractedLine[0] + " " + extractedLine[1], "1", "1", category)
                                         
                                 insertFlow.execute(query3, data3)
                                 srcName = " "
@@ -91,3 +100,4 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                 insertFlow.close()
                             except Error as e:
                                 print(e)
+
