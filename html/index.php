@@ -3,7 +3,7 @@
 	$DB_SERVER = 'localhost:3306';
 	$DB_USERNAME = 'parker';
 	$DB_PASSWORD = 'password';
-	$DB_DATABASE = 'application_identification';
+	$DB_DATABASE = 'user_profiling';
 	
 	$conn = mysqli_connect($DB_SERVER, $DB_USERNAME, $DB_PASSWORD, $DB_DATABASE);
 ?>
@@ -120,31 +120,37 @@
 	</header>
 	<body>
 		<h1>Quick summary</h1>
-		<h3>Percentage application is likely to be the different categories </h3>
+		<h3>Probability CDN/unknown IP address is associated to an application</h3>
 		<?php
 			# Display percentage of associated flows per category for each CDN
-			$sql = "SELECT application_type.Application_name, stats_table.Assoc_News, stats_table.Assoc_Social_Media, stats_table.Assoc_Streaming FROM stats_table INNER JOIN application_type on stats_table.App_ID = application_type.App_ID;";
+			#$sql = "SELECT application_type.Application_name, stats_table.Assoc_News, stats_table.Assoc_Social_Media, stats_table.Assoc_Streaming FROM stats_table INNER JOIN application_type on stats_table.App_ID = application_type.App_ID;";
+
+			$sql = "SELECT application_type.App_ID, application_type.Application_name, name_table.Assoc_BBC, name_table.Assoc_Facebook, name_table.Assoc_Spotify, name_table.Assoc_Twitter FROM application_type INNER JOIN name_table on name_table.App_ID = application_type.App_ID WHERE Assoc_BBC NOT like 0 or Assoc_Twitter NOT like 0 or Assoc_Spotify NOT like 0 or Assoc_Facebook NOT like 0";
+
 
 			$percent = mysqli_query($conn, $sql);
 				if(mysqli_num_rows($percent) > 0){
 					echo " <table>
 						<tr>
 						<th>Application Name</th>
-						<th>News</th>
-						<th>Social Media</th>
-						<th>Streaming</th>
+						<th>Facebook</th>
+						<th>Twitter</th>
+						<th>BBC</th>
+						<th>Spotify</th>
 						</tr>";
 					while($row = mysqli_fetch_array($percent)){
-						$total = $row['Assoc_News'] + $row['Assoc_Social_Media']+$row['Assoc_Streaming'];
+						$total = $row['Assoc_Facebook'] + $row['Assoc_Twitter']+$row['Assoc_BBC']+$row['Assoc_Spotify'];
 						$name = $row['Application_name'];
-						$percentNews = ($row['Assoc_News'] / $total) * 100 ;
-						$percentSocial = ($row['Assoc_Social_Media'] / $total) * 100 ;
-						$percentStreaming = ($row['Assoc_Streaming'] / $total) * 100 ;
+						$percentFacebook = ($row['Assoc_Facebook'] / $total) * 100 ;
+						$percentTwitter = ($row['Assoc_Twitter'] / $total) * 100 ;
+						$percentBBC = ($row['Assoc_BBC'] / $total) * 100 ;
+						$percentSpotify = ($row['Assoc_Spotify'] / $total) * 100 ;
 						echo "<tr>
 						      <td>$name</td>
-						      <td>$percentNews%</td>
-						      <td>$percentSocial%</td>
-						      <td>$percentStreaming%</td>
+						      <td>$percentFacebook%</td>
+						      <td>$percentTwitter%</td>
+						      <td>$percentBBC%</td>
+						      <td>$percentSpotify%</td>
 						      </tr>";	
 					}
 					echo "</table>";
@@ -164,3 +170,6 @@
 		
 	</body>
 </html>
+
+
+
