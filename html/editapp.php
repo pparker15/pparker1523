@@ -3,7 +3,7 @@
 	$DB_SERVER = 'localhost:3306';
 	$DB_USERNAME = 'parker';
 	$DB_PASSWORD = 'password';
-	$DB_DATABASE = 'application_identification';
+	$DB_DATABASE = 'user_profiling';
 	
 	$conn = mysqli_connect($DB_SERVER, $DB_USERNAME, $DB_PASSWORD, $DB_DATABASE);
 ?>
