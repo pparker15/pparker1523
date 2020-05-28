@@ -1,6 +1,6 @@
 import mysql.connector
 from mysql.connector import Error
-connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='application_identification')
+connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
 
 # Add users to the name_table
 getUsers = connection.cursor()
@@ -80,17 +80,19 @@ try:
         result4 = AppID.fetchall()
         printed = " "
         for r in result4:
-            if r[1] in n[1] and printed != "true":
+            #AS Value
+            if r[1] in n[2] and printed != "true":
                 aID = r[0]
                 printed = "true"
-            elif r[1] in n[2] and printed != "true":
+            #NS value
+            elif r[1] in n[3] and printed != "true":
                 aID = r[0]
                 printed = "true"
             elif printed != "true":
                 aID = 1
         try:
             updateNames = connection.cursor()
-            updateNameQuery = ("UPDATE name_table SET App_ID = %s WHERE IP_address = %s")
+            updateNameQuery = ("UPDATE name_table SET App_ID = %s WHERE name_id = %s")
             dataAppID = (aID, n[0])
             updateNames.execute(updateNameQuery, dataAppID)
             connection.commit()
@@ -99,5 +101,16 @@ try:
         except Error as e:
             print(e)
     getNames.close()
+except Error as e:
+    print(e)
+
+# If not inserted add this line - this allows any unknowns to be added to the flows table. Ignore means it will not get added if its already there
+try:
+    finalRow = connection.cursor()
+    insertFinal = ("INSERT IGNORE INTO name_table (name_id, IP_address, AS_name, NS_name, App_ID) VALUES (1, 'NA', 'Unknown', 'Unknown', 1)")
+    finalRow.execute(insertFinal)
+    connection.commit()
+    finalRow.close()
+    AppID.close()
 except Error as e:
     print(e)
