@@ -1,6 +1,6 @@
 import mysql.connector
 from mysql.connector import Error
-connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='application_identification')
+connection = mysql.connector.connect(user='parker', password='password', host='192.168.20.30', database='user_profiling')
 
 with open("nfDumpOutput.txt", 'r') as captureFile:
     for captureLine in captureFile:
@@ -44,3 +44,4 @@ with open("nfDumpOutput.txt", 'r') as captureFile:
                                 checkMatch2.close()
                             except Error as e: 
                                 print(e)
+
